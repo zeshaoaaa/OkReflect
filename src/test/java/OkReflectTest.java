@@ -29,6 +29,12 @@ public class OkReflectTest {
                 .create("Hello OkReflect")
                 .call("substring", 6)
                 .callWithResult("toString")
+                .error(new OkReflect.OkReflectErrorCallback() {
+                    @Override
+                    public void onError(@NotNull String errorMsg) {
+                        System.out.println(errorMsg);
+                    }
+                })
                 .get();
         System.out.println(str);
 

@@ -101,6 +101,20 @@ class OkReflect {
         return accessible(declared)
     }
 
+    /**
+     * @param action: The action that you want to take when exception happen.
+     *
+     * Set the error callback for receive error message when exception happen.
+     * If you have not set the callback, then you have catch exception by yourself.
+     */
+    fun error(action: (String) -> Unit): OkReflect {
+        errorCallback = object : OkReflectErrorCallback {
+            override fun onError(errorMsg: String) {
+                action(errorMsg)
+            }
+        }
+        return this
+    }
 
     /**
      * @param okReflectErrorCallback: Exception callback.

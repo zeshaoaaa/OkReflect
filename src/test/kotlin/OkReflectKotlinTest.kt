@@ -8,6 +8,9 @@ class OkReflectKotlinTest {
             .create("Hello OkReflect")
             .call("substring", 6)
             .callWithResult("toString")
+            .error{
+                println(it)
+            }
             .get<String>()
         println(result)
 
