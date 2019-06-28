@@ -23,4 +23,15 @@ public class OkReflectTest {
         Assert.assertEquals(result, 1);
     }
 
+    @Test
+    public void testCallSubstringAndToString() {
+        String str = OkReflect.Companion.on("java.lang.String")
+                .create("Hello OkReflect")
+                .call("substring", 6)
+                .callWithResult("toString")
+                .get();
+        System.out.println(str);
+
+    }
+
 }

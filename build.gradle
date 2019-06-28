@@ -1,28 +1,32 @@
+buildscript {
+    ext.project_name = 'OkReflect'
+}
+
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.3.40'
+    id "com.jfrog.bintray" version "1.7"
 }
 
 group 'com.jayou'
-version '1.0-SNAPSHOT'
+version '0.0.1'
+
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
     jcenter()
-    maven {
-        url  "https://dl.bintray.com/zeshaoaaa/maven"
-    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
-    // Libraries that 
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.4'
-    classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
+    // Libraries that use for distribution
+    implementation "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3"
+
 }
 
 compileKotlin {
@@ -31,3 +35,49 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+bintray {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_API_KEY")
+    publications = ['mavenJava']
+
+    pkg {
+        repo = 'maven'
+        name = project_name
+
+        version {
+            name = project.version
+            released = new Date()
+            vcsTag = "v${project.version}"
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: project.classes) {
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: project.javadoc) {
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId project.bintray.pkg.name
+            from components.java
+
+            artifact sourcesJar {
+                classifier = 'sources'
+            }
+            artifact javadocJar {
+                classifier = 'javadoc'
+            }
+        }
+    }
+}
+
