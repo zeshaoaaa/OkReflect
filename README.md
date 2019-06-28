@@ -1,5 +1,6 @@
-# OkReflect
+[中文文档](https://github.com/zeshaoaaa/OkReflect/blob/master/README_CN.md)
 
+# OkReflect
 OkReflect is a library that mean to help use Java Reflect feature with ease.
 
 ## Usage
