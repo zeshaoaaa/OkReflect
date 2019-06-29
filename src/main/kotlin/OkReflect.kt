@@ -1,7 +1,7 @@
 import java.lang.reflect.*
 
 /**
- * OkReflect is a library that mean to help use Java Reflect feature with ease.
+ * OkReflect is a library that trying to help you use Java Reflect feature with ease.
  *
  * The reasons why I develop this library is because I run into some problem while using jOOR.
  * If you encounter some problem or you have some suggestion for me, you can post an issue,
@@ -218,6 +218,18 @@ class OkReflect {
      * Get the instance or the return value of the method that you called.
      */
     fun <T> get(): T? {
+        return try {
+            realGet()
+        } catch (e: Exception) {
+            printError(e.cause.toString())
+            null
+        }
+    }
+
+    /**
+     * Get the instance no matter result have value or not.
+     */
+    fun <T> getInstance(): T? {
         return try {
             realGet()
         } catch (e: Exception) {
