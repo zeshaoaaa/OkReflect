@@ -52,7 +52,12 @@ String str = OkReflect
                 })
                 .get();
 
-// Dynamic Proxy
+// First step of using dynamic proxy: declare the interface
+public interface StringProxy {
+  String substring(int beginIndex);
+}
+
+// Second step of using dynamic proxy: use
 String substring = OkReflect.on("java.lang.String")
                 .create("Hello World")
                 .use(StringProxy.class)
@@ -79,18 +84,44 @@ val str = OkReflect
             .call("substring", 6)
             .get<String>()
 
+// Handle the exception with callback
+val str = OkReflect
+            .on("java.lang.String")
+            .error(object : OkReflect.OkReflectErrorCallback {
+                override fun onError(e: Exception) {
+                    Assert.assertTrue(e.toString().contains("you have to call create()"))
+                }
+            })
+            .get<String>()
+
+// First step of using dynamic proxy: declare the interface
+interface StringProxy {
+  fun substring(beginIndex: Int): String
+}
+
+// Second step of using dynamic proxy: use
+val substring = OkReflect.on("java.lang.String")
+            .create("Hello World")
+            .use(StringProxy::class.java)
+            .substring(6)
+
+
+
 ```
 
 ### 
 
 ## Configuration
 ```groovy
-repositories {
-    jcenter()
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
 }
 ```
 ```groovy
 dependencies {
-    implementation 'com.jayou:OkReflect:0.0.1'
+    implementation 'com.github.zeshaoaaa:OkReflect:Tag'
 }
 ```
