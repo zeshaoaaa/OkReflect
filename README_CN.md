@@ -137,6 +137,6 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:Tag'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.0.2'
 }
 ```
