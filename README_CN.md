@@ -91,6 +91,14 @@ val str = OkReflect
             .callWithResult("substring", 4)
             .get<String>()
 
+// 使用函数处理异常
+ val str = OkReflect
+            .on("java.lang.String")
+            .error{
+                Assert.assertTrue(it.toString().contains("you have to call create()"))
+            }
+            .get<String>()
+
 // 使用回调处理异常
 val str = OkReflect
             .on("java.lang.String")
@@ -121,10 +129,10 @@ val substring = OkReflect.on("java.lang.String")
 ## Configuration
 ```groovy
 allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
 }
 ```
 ```groovy
