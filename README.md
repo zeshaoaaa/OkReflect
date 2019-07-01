@@ -77,11 +77,19 @@ val str: String? = OkReflect.on(String::class.java)
             .create("test")
             .get()
 
-// Invoke method
+// Invoke method with instance
 val str = OkReflect
             .on(String::class.java)
             .create("Hello world")
-            .call("substring", 6)
+            .call("substring", 6)     
+            .get<String>()
+
+// Invoke method with return value from last method
+val str = OkReflect
+						.on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)            
+            .callWithResult("substring", 4)  
             .get<String>()
 
 // Handle the exception with function

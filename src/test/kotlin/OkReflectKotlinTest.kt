@@ -7,31 +7,31 @@ import kotlin.math.exp
 
 class OkReflectKotlinTest {
 
-    private val expectedException = ExpectedException.none()
-
+    // Test whether OkReflect can create instance with constructor that have parameter.
     @Test
     fun testCreateInstanceFromClassNameWithConstructorThatHaveParameter() {
-        val str: String? = OkReflect.on("java.lang.String")
+        val str = OkReflect.on("java.lang.String")
             .create("test")
-            .get()
+            .get<String>()
         Assert.assertEquals(str, "test")
     }
 
     @Test
     fun testCreateInstanceFromClass() {
-        val str: String? = OkReflect.on(String::class.java)
+        val str = OkReflect.on(String::class.java)
             .create("test")
-            .get()
+            .get<String>()
         Assert.assertEquals(str, "test")
     }
 
+    private var expectedException = ExpectedException.none()
 
     @Test(expected = NullPointerException::class)
     fun testNotCallCreateException() {
         val str = OkReflect
             .on("java.lang.String")
             .get<String>()
-        expectedException.expectMessage("you have to call ")
+        expectedException.expectMessage("you have to call")
     }
 
     @Test
@@ -66,17 +66,7 @@ class OkReflectKotlinTest {
     }
 
     @Test
-    fun testHandleExceptionWithFunction() {
-        val str = OkReflect
-            .on("java.lang.String")
-            .error{
-                Assert.assertTrue(it.toString().contains("you have to call create()"))
-            }
-            .get<String>()
-    }
-
-    @Test
-    fun testHandleExceptionWithCallback() {
+    fun testNotCallCreateErrorCallback() {
         val str = OkReflect
             .on("java.lang.String")
             .error(object : OkReflect.OkReflectErrorCallback {
