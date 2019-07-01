@@ -107,10 +107,10 @@ class OkReflect {
      * Set the error callback for receive error message when exception happen.
      * If you have not set the callback, then you have catch exception by yourself.
      */
-    fun error(action: (String) -> Unit): OkReflect {
+    fun error(action: (java.lang.Exception) -> Unit): OkReflect {
         errorCallback = object : OkReflectErrorCallback {
-            override fun onError(errorMsg: String) {
-                action(errorMsg)
+            override fun onError(e: Exception) {
+                action(e)
             }
         }
         return this
@@ -132,7 +132,7 @@ class OkReflect {
      * @param args: The parameters of the method that you wan to call.
      *
      * Call the method that you want to call.
-     * The method will be called when get() method called.
+     * The method will be called when [get] method called.
      * The method will be call with the instance.
      */
     fun call(methodName: String, vararg args: Any): OkReflect {
@@ -143,8 +143,11 @@ class OkReflect {
      * @param methodName: the name of the method that you want to call.
      * @param args: The parameters of the method that you wan to call.
      *
+     *
+
+     *
      * Call the method that you want to call.
-     * The method will be called when get() method called.
+     * The method will be called when [get] method called.
      * The method will be call with the return value from last method.
      */
     fun callWithResult(methodName: String, vararg args: Any): OkReflect {
@@ -188,14 +191,33 @@ class OkReflect {
                 if (result != null) {
                     result = method.invoke(result, *args)
                 } else {
-                    printError(
-                        "you cannot call the method with the return value of last method" +
-                                ", because it is null."
-                    )
+                    throw java.lang.NullPointerException("you cannot call the method " +
+                            "with the return value of last method when it's null.")
                 }
             }
         }
 
+    }
+
+    fun <T> use(proxyClass: Class<T>): T {
+        val handler = object : InvocationHandler {
+            override fun invoke(proxy: Any?, method: Method?, vararg args: Any): Any {
+                var methodName: String? = null
+                if (method != null) {
+                    methodName = method.name
+                }
+                if (methodName != null) {
+                    try {
+                        return call(methodName, *args).get()!!
+                    } catch (e: Exception) {
+                        throw e
+                    }
+                } else {
+                    throw Exception("Cannot find the method tha you invoked.")
+                }
+            }
+        }
+        return Proxy.newProxyInstance(proxyClass.classLoader, arrayOf(proxyClass), handler) as T
     }
 
     /**
@@ -205,23 +227,39 @@ class OkReflect {
      * If you have already pass the ErrorCallback into onError method,
      * you will receive the error message from callback.
      */
-    private fun printError(msg: String) {
+    private fun printError(e: java.lang.Exception) {
+        if (errorCallback != null) {
+            errorCallback!!.onError(e)
+        } else {
+            throw e
+        }
+    }
+
+    /**
+     * @param msg: The error message that you want to output.
+     *
+     * Print the exception message.
+     * If you have already pass the ErrorCallback into onError method,
+     * you will receive the error message from callback.
+     */
+    /*private fun printError(msg: String) {
         if (errorCallback != null) {
             errorCallback!!.onError("error: $msg")
         } else {
             throw Exception(msg)
             // Log.e("OkReflect", "error: $msg")
         }
-    }
+    }*/
 
     /**
-     * Get the instance or the return value of the method that you called.
+     * Get the result value from last method if it has a return value,
+     * or else you will get the instance.
      */
     fun <T> get(): T? {
         return try {
             realGet()
         } catch (e: Exception) {
-            printError(e.cause.toString())
+            printError(e)
             null
         }
     }
@@ -231,9 +269,9 @@ class OkReflect {
      */
     fun <T> getInstance(): T? {
         return try {
-            realGet()
+            realGet(true)
         } catch (e: Exception) {
-            printError(e.cause.toString())
+            printError(e)
             null
         }
     }
@@ -241,10 +279,9 @@ class OkReflect {
     /**
      * Initialize the instance and invoke the methods that you called.
      */
-    private fun <T> realGet(): T? {
-        if (clazz == null && className == null && className!!.isEmpty()) {
-            printError("you must specify the className or class.")
-            return null
+    private fun <T> realGet(onlyInstance: Boolean = false): T? {
+        return if (clazz == null && className == null && className!!.isEmpty()) {
+            throw java.lang.NullPointerException("you must specify the className or class.")
         } else {
             if (clazz == null) {
                 this.clazz = Class.forName(className!!)
@@ -252,12 +289,11 @@ class OkReflect {
             if (constructorArgs != null) {
                 initInstance()
                 invokeMethods()
-                return getByResult()
+                getByResult<T>(onlyInstance)
             } else {
-                printError("you have to call create() method, or else you will get nothing.")
+                throw NullPointerException("you have to call create() method, or else you will get nothing.")
             }
         }
-        return null
     }
 
     /**
@@ -424,15 +460,20 @@ class OkReflect {
     /**
      * Cast to result or instance to the type that you want.
      */
-    private fun <T> getByResult(): T? {
+    private fun <T> getByResult(onlyInstance: Boolean): T? {
         return try {
-            if (result != null) {
-                result as T
+            if (onlyInstance) {
+                return instance as T
             } else {
-                instance as T
+                if (result != null) {
+                    result as T
+                } else {
+                    instance as T
+                }
             }
+
         } catch (e: Exception) {
-            printError(e.cause.toString())
+            printError(e)
             null
         }
     }
@@ -442,6 +483,7 @@ class OkReflect {
         /**
          * Set the class name of the instance/
          */
+        @JvmStatic
         fun on(className: String): OkReflect {
             return OkReflect(className)
         }
@@ -449,19 +491,40 @@ class OkReflect {
         /**
          * Set the class object of the instance.
          */
+        @JvmStatic
         fun on(clazz: Class<String>): OkReflect {
             return OkReflect(clazz)
         }
 
-    }
+        /**
+         * @param path: The path and name of the class.
+         * @param content: The content of the class.
+         * @param options: The options use for compile.
+         *
+         * Compile content to class.
+         */
+        @JvmStatic
+        fun compile(path: String, content: String, options: OkCompileOptions) {
+            OkCompiler.compile(path, content, options)
+        }
 
+        /**
+         * @see [compile]
+         */
+        @JvmStatic
+        fun compile(path: String, content: String) {
+            compile(path, content, OkCompileOptions())
+        }
+
+
+    }
 
     /**
      * When exception happen, onError method of this callback will be call
      * if you have specified it.
      */
     interface OkReflectErrorCallback {
-        fun onError(errorMsg: String)
+        fun onError(e: Exception)
     }
 
 }

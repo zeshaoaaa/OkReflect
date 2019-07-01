@@ -1,19 +1,126 @@
+import com.sun.source.tree.AssertTree
+import org.junit.Assert
 import org.junit.Test
+import org.junit.rules.ExpectedException
+import java.lang.NullPointerException
+import kotlin.math.exp
 
 class OkReflectKotlinTest {
 
-    @Test
-    fun testCallSubstringAndToString() {
-        val result = OkReflect.on("java.lang.String")
-            .create("Hello OkReflect")
-            .call("substring", 6)
-            .callWithResult("toString")
-            .error{
-                println(it)
-            }
-            .get<String>()
-        println(result)
+    private val expectedException = ExpectedException.none()
 
+    @Test
+    fun testCreateInstanceFromClassNameWithConstructorThatHaveParameter() {
+        val str: String? = OkReflect.on("java.lang.String")
+            .create("test")
+            .get()
+        Assert.assertEquals(str, "test")
+    }
+
+    @Test
+    fun testCreateInstanceFromClass() {
+        val str: String? = OkReflect.on(String::class.java)
+            .create("test")
+            .get()
+        Assert.assertEquals(str, "test")
+    }
+
+
+    @Test(expected = NullPointerException::class)
+    fun testNotCallCreateException() {
+        val str = OkReflect
+            .on("java.lang.String")
+            .get<String>()
+        expectedException.expectMessage("you have to call ")
+    }
+
+    @Test
+    fun testCallMethod() {
+        val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)
+            .get<String>()
+        Assert.assertEquals(str, "world")
+    }
+
+    @Test
+    fun testCallWithResult() {
+        val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)
+            .callWithResult("substring", 4)
+            .get<String>()
+        Assert.assertEquals(str, "d")
+    }
+
+    @Test
+    fun testGetInstanceAfterMethodCall() {
+        val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)
+            .getInstance<String>()
+        Assert.assertEquals(str, "Hello world")
+    }
+
+    @Test
+    fun testNotCallCreateErrorCallback() {
+        val str = OkReflect
+            .on("java.lang.String")
+            .error(object : OkReflect.OkReflectErrorCallback {
+                override fun onError(e: Exception) {
+                    Assert.assertTrue(e.toString().contains("you have to call create()"))
+                }
+            })
+            .get<String>()
+    }
+
+    @Test
+    fun testNoSuchMethodErrorCallback() {
+        val str = OkReflect
+            .on("java.lang.String")
+            .create("Hello world")
+            .call("hhh")
+            .error(object : OkReflect.OkReflectErrorCallback {
+                override fun onError(e: Exception) {
+                    Assert.assertTrue(e.toString().contains("NoSuchMethod"))
+                }
+            })
+            .get<String>()
+    }
+
+    /**
+     * Test call private method that the parameter is  primitive type.
+     */
+    @Test
+    fun testCallPrivatePrimitiveTypeParameterMethod() {
+        val b: Byte = 1
+        val result = OkReflect.on("TestClass")
+            .create("Tom")
+            .call("setByte", b)
+            .call("getByte")
+            .get<Byte>()!!
+        Assert.assertEquals(result.toLong(), 1)
+    }
+
+
+    @Test
+    fun testDynamicProxy() {
+        val substring = OkReflect.on("java.lang.String")
+            .create("Hello World")
+            .use(StringProxy::class.java)
+            .substring(6)
+        Assert.assertEquals(substring, "World")
+    }
+
+    @Test
+    fun testStringToJavaFile() {
+    }
+
+    interface StringProxy {
+        fun substring(beginIndex: Int): String
     }
 
 }
