@@ -46,7 +46,7 @@ String str = OkReflect
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        Assert.assertTrue(e.toString().contains("NoSuchMethod"));
+                        // 处理异常
                     }
                 })
                 .get();
@@ -96,7 +96,7 @@ val str = OkReflect
             .on("java.lang.String")
             .error(object : OkReflect.OkReflectErrorCallback {
                 override fun onError(e: Exception) {
-                    Assert.assertTrue(e.toString().contains("you have to call create()"))
+                    // 处理异常
                 }
             })
             .get<String>()

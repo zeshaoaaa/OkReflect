@@ -66,7 +66,17 @@ class OkReflectKotlinTest {
     }
 
     @Test
-    fun testNotCallCreateErrorCallback() {
+    fun testHandleExceptionWithFunction() {
+        val str = OkReflect
+            .on("java.lang.String")
+            .error{
+                Assert.assertTrue(it.toString().contains("you have to call create()"))
+            }
+            .get<String>()
+    }
+
+    @Test
+    fun testHandleExceptionWithCallback() {
         val str = OkReflect
             .on("java.lang.String")
             .error(object : OkReflect.OkReflectErrorCallback {

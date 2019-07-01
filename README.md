@@ -47,7 +47,7 @@ String str = OkReflect
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        Assert.assertTrue(e.toString().contains("NoSuchMethod"));
+                        // handle the exception
                     }
                 })
                 .get();
@@ -84,12 +84,20 @@ val str = OkReflect
             .call("substring", 6)
             .get<String>()
 
+// Handle the exception with function
+val str = OkReflect
+            .on("java.lang.String")
+            .error{
+                // handle exception
+            }
+            .get<String>()
+
 // Handle the exception with callback
 val str = OkReflect
             .on("java.lang.String")
             .error(object : OkReflect.OkReflectErrorCallback {
                 override fun onError(e: Exception) {
-                    Assert.assertTrue(e.toString().contains("you have to call create()"))
+                    // handle exception
                 }
             })
             .get<String>()
