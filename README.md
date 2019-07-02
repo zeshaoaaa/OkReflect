@@ -7,7 +7,7 @@ OkReflect is a library that trying to help you use Java Reflect feature with eas
 ### Java
 
 ```java
-// Create instance with path of the class
+// Create instance with name of the class
 String str = OkReflect.on("java.lang.String")
                 .create("Hello OkReflect")
                 .get();
