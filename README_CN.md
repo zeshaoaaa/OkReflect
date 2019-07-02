@@ -51,6 +51,12 @@ String str = OkReflect
                 })
                 .get();
 
+// 获取与设置字段的值
+char[] value = OkReflect.on("java.lang.String")
+                .create()
+                .set("value", "Alex".toCharArray())
+                .getField("value");
+
 // 动态代理第一步：声明接口
 public interface StringProxy {
   String substring(int beginIndex);
@@ -108,6 +114,12 @@ val str = OkReflect
                 }
             })
             .get<String>()
+
+// 获取与设置字段的值
+val value = OkReflect.on("java.lang.String")
+            .create()
+            .set("value", "Alex".toCharArray())
+            .getField<CharArray>("value")
 
 // 动态代理第一步：声明接口
 interface StringProxy {

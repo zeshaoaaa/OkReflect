@@ -12,6 +12,27 @@ import java.lang.reflect.*
  */
 class OkReflect {
 
+
+    /**
+     * Return the return value from the method that you invoked.
+     */
+    private val RETURN_FLAG_RESULT = 1
+
+    /**
+     * Return the instance.
+     */
+    private val RETURN_FLAG_INSTANCE = 2
+
+    /**
+     * Return the field.
+     */
+    private val RETURN_FLAG_FIELD = 3
+
+    /**
+     * Indicate what value will return.
+     */
+    private var returnFlag = RETURN_FLAG_RESULT
+
     /**
      * The className of the object that you want to create.
      */
@@ -25,7 +46,22 @@ class OkReflect {
     /**
      * All the method that you called will store with this map.
      */
-    private var methodCallList: LinkedHashMap<Pair<String, Boolean>, Array<out Any>>? = null
+    private var methodCallList: ArrayList<MethodCall>? = null
+
+    /**
+     * All the fields that you want to set will store with this map.
+     */
+    private var setFieldMap: LinkedHashMap<String, Any>? = null
+
+    /**
+     * The name of the field that you want to get.
+     */
+    private var targetFieldName: String? = null
+
+    /**
+     * The value fo the field that you want to get.
+     */
+    private var targetFieldValue: Any? = null
 
     /**
      * OnError method of this callback will be call when exception happen.
@@ -127,6 +163,7 @@ class OkReflect {
         return this
     }
 
+
     /**
      * @param methodName: the name of the method that you want to call.
      * @param args: The parameters of the method that you wan to call.
@@ -161,44 +198,79 @@ class OkReflect {
      *
      * Invoke the method with instance or the return type from last method.
      */
-    private fun realCall(methodName: String, callWithInstance: Boolean = true, vararg args: Any): OkReflect {
+    private fun realCall(
+        methodName: String, callWithInstance: Boolean = true,
+        vararg args: Any
+    ): OkReflect {
         if (methodCallList == null) {
-            methodCallList = LinkedHashMap()
+            methodCallList = ArrayList()
         }
-        val key = Pair(methodName, callWithInstance)
-        methodCallList!![key] = args
+        methodCallList!!.add(MethodCall(methodName, callWithInstance, args))
         return this
     }
 
     /**
-     * @param nameAndFrom: The first value is the method name,
-     * the second value is whether you call the method by instance
-     * or by the return value from the last method.
-     * When the second value is true, it means you call the method with instnace.
+     * @param fieldName: The name of the field that you want to set.
+     * @param arg: The value of the field that you want to set.
+     */
+    fun set(fieldName: String, arg: Any): OkReflect {
+        if (setFieldMap == null) {
+            setFieldMap = LinkedHashMap()
+        }
+        setFieldMap!![fieldName] = arg
+        return this
+    }
+
+
+    /**
+     * @param methodCall: This object include the name of the method, whether
+     * call the method with instance or not, and parameters for invoking the method.
      *
      * Invoke the the method that you called by call() method.
      */
-    private fun invoke(nameAndFrom: Pair<String, Boolean>, vararg args: Any) {
-        val method = getMethod(nameAndFrom.first, args)
-        val withInstance = nameAndFrom.second
+    private fun invoke(methodCall: MethodCall) {
+        val args = methodCall.args
+        val method = getMethod(methodCall.methodName, args)
+        val withInstance = methodCall.callWithInstance
         val returnType = method!!.returnType.toString()
         if (returnType == "void") {
             method.invoke(instance, *args)
         } else {
-            if (withInstance) {
-                result = method.invoke(instance, *args)
+            result = if (withInstance) {
+                method.invoke(instance, *args)
             } else {
                 if (result != null) {
-                    result = method.invoke(result, *args)
+                    method.invoke(result, *args)
                 } else {
-                    throw java.lang.NullPointerException("you cannot call the method " +
-                            "with the return value of last method when it's null.")
+                    throw java.lang.NullPointerException(
+                        "you cannot call the method " +
+                                "with the return value of last method when it's null."
+                    )
                 }
             }
         }
 
     }
 
+    /**
+     * @param fieldName: The name of the field.
+     * @param arg: The value that you want to set to the field.
+     */
+    private fun setField(fieldName: String, arg: Any) {
+        val field = instance!!.javaClass.getDeclaredField(fieldName)
+        accessible(field).set(instance, arg)
+    }
+
+    private fun initFieldValue() {
+        if (targetFieldName != null) {
+            val field = instance!!.javaClass.getDeclaredField(targetFieldName)
+            targetFieldValue = accessible(field).get(instance)
+        }
+    }
+
+    /**
+     * @param proxyClass:The proxy object
+     */
     fun <T> use(proxyClass: Class<T>): T {
         val handler = object : InvocationHandler {
             override fun invoke(proxy: Any?, method: Method?, vararg args: Any): Any {
@@ -236,28 +308,12 @@ class OkReflect {
     }
 
     /**
-     * @param msg: The error message that you want to output.
-     *
-     * Print the exception message.
-     * If you have already pass the ErrorCallback into onError method,
-     * you will receive the error message from callback.
-     */
-    /*private fun printError(msg: String) {
-        if (errorCallback != null) {
-            errorCallback!!.onError("error: $msg")
-        } else {
-            throw Exception(msg)
-            // Log.e("OkReflect", "error: $msg")
-        }
-    }*/
-
-    /**
      * Get the result value from last method if it has a return value,
      * or else you will get the instance.
      */
     fun <T> get(): T? {
         return try {
-            realGet()
+            realGet(RETURN_FLAG_RESULT)
         } catch (e: Exception) {
             printError(e)
             null
@@ -268,8 +324,21 @@ class OkReflect {
      * Get the instance no matter result have value or not.
      */
     fun <T> getInstance(): T? {
+        return getByFlag<T>(RETURN_FLAG_INSTANCE)
+
+    }
+
+    /**
+     * Get the field from the instance.
+     */
+    fun <T> getField(fieldName: String): T? {
+        targetFieldName = fieldName
+        return getByFlag<T>(RETURN_FLAG_FIELD)
+    }
+
+    private fun <T> getByFlag(returnFlag: Int): T? {
         return try {
-            realGet(true)
+            realGet(returnFlag)
         } catch (e: Exception) {
             printError(e)
             null
@@ -279,7 +348,7 @@ class OkReflect {
     /**
      * Initialize the instance and invoke the methods that you called.
      */
-    private fun <T> realGet(onlyInstance: Boolean = false): T? {
+    private fun <T> realGet(returnFlag: Int): T? {
         return if (clazz == null && className == null && className!!.isEmpty()) {
             throw java.lang.NullPointerException("you must specify the className or class.")
         } else {
@@ -289,7 +358,9 @@ class OkReflect {
             if (constructorArgs != null) {
                 initInstance()
                 invokeMethods()
-                getByResult<T>(onlyInstance)
+                setFields()
+                initFieldValue()
+                getByResult<T>(returnFlag)
             } else {
                 throw NullPointerException("you have to call create() method, or else you will get nothing.")
             }
@@ -302,10 +373,19 @@ class OkReflect {
     private fun invokeMethods() {
         if (methodCallList != null && methodCallList!!.size > 0) {
             methodCallList?.forEach {
-                invoke(it.key, *it.value)
+                invoke(it)
             }
         }
     }
+
+    private fun setFields() {
+        if (setFieldMap != null && setFieldMap!!.size > 0) {
+            setFieldMap?.forEach {
+                setField(it.key, it.value)
+            }
+        }
+    }
+
 
     /**
      * @Param args: Variable arguments of constructor or method of the class.
@@ -460,16 +540,18 @@ class OkReflect {
     /**
      * Cast to result or instance to the type that you want.
      */
-    private fun <T> getByResult(onlyInstance: Boolean): T? {
+    private fun <T> getByResult(returnFlag: Int): T? {
         return try {
-            if (onlyInstance) {
-                return instance as T
-            } else {
-                if (result != null) {
-                    result as T
-                } else {
-                    instance as T
+            when (returnFlag) {
+                RETURN_FLAG_RESULT -> {
+                    if (result != null) {
+                        result as T
+                    } else {
+                        instance as T
+                    }
                 }
+                RETURN_FLAG_INSTANCE -> instance as T
+                else -> targetFieldValue as T
             }
         } catch (e: Exception) {
             printError(e)
@@ -525,5 +607,7 @@ class OkReflect {
     interface OkReflectErrorCallback {
         fun onError(e: Exception)
     }
+
+    class MethodCall(val methodName: String, val callWithInstance: Boolean, val args: Array<out Any>)
 
 }

@@ -5,6 +5,7 @@ import org.junit.rules.ExpectedException;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class OkReflectTest {
@@ -124,6 +125,16 @@ public class OkReflectTest {
 
     public interface StringProxy {
         String substring(int beginIndex);
+    }
+
+    @Test
+    public void testSetField() {
+        char[] value = OkReflect.on("java.lang.String")
+                .create()
+                .set("value", "Alex".toCharArray())
+                .getField("value");
+        System.out.println("");
+
     }
 
 }

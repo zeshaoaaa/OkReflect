@@ -39,6 +39,12 @@ String str = OkReflect
                 .call("substring", 6)
                 .getInstance();
 
+// Get and set field value
+char[] value = OkReflect.on("java.lang.String")
+                .create()
+                .set("value", "Alex".toCharArray())
+                .getField("value");
+
 // Handle the exception with callback
 String str = OkReflect
                 .on("java.lang.String")
@@ -110,6 +116,12 @@ val str = OkReflect
             })
             .get<String>()
 
+// Get and set field value
+val value = OkReflect.on("java.lang.String")
+            .create()
+            .set("value", "Alex".toCharArray())
+            .getField<CharArray>("value")
+
 // First step of using dynamic proxy: declare the interface
 interface StringProxy {
   fun substring(beginIndex: Int): String
@@ -120,8 +132,6 @@ val substring = OkReflect.on("java.lang.String")
             .create("Hello World")
             .use(StringProxy::class.java)
             .substring(6)
-
-
 
 ```
 

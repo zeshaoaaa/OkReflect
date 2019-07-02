@@ -66,6 +66,16 @@ class OkReflectKotlinTest {
     }
 
     @Test
+    fun testHandleExceptionWithFunction() {
+        val str = OkReflect
+            .on("java.lang.String")
+            .error {
+                Assert.assertTrue(it.toString().contains("you have to call create()"))
+            }
+            .get<String>()
+    }
+
+    @Test
     fun testNotCallCreateErrorCallback() {
         val str = OkReflect
             .on("java.lang.String")
@@ -105,6 +115,9 @@ class OkReflectKotlinTest {
         Assert.assertEquals(result.toLong(), 1)
     }
 
+    interface StringProxy {
+        fun substring(beginIndex: Int): String
+    }
 
     @Test
     fun testDynamicProxy() {
@@ -116,11 +129,16 @@ class OkReflectKotlinTest {
     }
 
     @Test
-    fun testStringToJavaFile() {
+    fun testSetField() {
+        val value = OkReflect.on("java.lang.String")
+            .create()
+            .set("value", "Alex".toCharArray())
+            .getField<CharArray>("value")
+        println("")
     }
 
-    interface StringProxy {
-        fun substring(beginIndex: Int): String
+    @Test
+    fun testStringToJavaFile() {
     }
 
 }
