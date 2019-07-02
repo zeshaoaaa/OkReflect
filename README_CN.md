@@ -127,6 +127,7 @@ val substring = OkReflect.on("java.lang.String")
 ### 
 
 ## Configuration
+### Gradle 
 ```groovy
 allprojects {
     repositories {
@@ -139,4 +140,20 @@ allprojects {
 dependencies {
     implementation 'com.github.zeshaoaaa:OkReflect:0.0.2'
 }
+```
+### Maven
+```xml
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+```
+```xml
+	<dependency>
+	    <groupId>com.github.zeshaoaaa</groupId>
+	    <artifactId>OkReflect</artifactId>
+	    <version>Tag</version>
+	</dependency>
 ```

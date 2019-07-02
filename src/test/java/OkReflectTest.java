@@ -109,7 +109,6 @@ public class OkReflectTest {
         Assert.assertEquals(result, 1);
     }
 
-
     @Test
     public void testDynamicProxy() {
         String substring = OkReflect.on("java.lang.String")

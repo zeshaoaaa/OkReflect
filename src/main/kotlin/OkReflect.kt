@@ -471,7 +471,6 @@ class OkReflect {
                     instance as T
                 }
             }
-
         } catch (e: Exception) {
             printError(e)
             null
