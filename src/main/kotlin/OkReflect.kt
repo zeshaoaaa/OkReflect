@@ -12,27 +12,6 @@ import java.lang.reflect.*
  */
 class OkReflect {
 
-
-    /**
-     * Return the return value from the method that you invoked.
-     */
-    private val RETURN_FLAG_RESULT = 1
-
-    /**
-     * Return the instance.
-     */
-    private val RETURN_FLAG_INSTANCE = 2
-
-    /**
-     * Return the field.
-     */
-    private val RETURN_FLAG_FIELD = 3
-
-    /**
-     * Indicate what value will return.
-     */
-    private var returnFlag = RETURN_FLAG_RESULT
-
     /**
      * The className of the object that you want to create.
      */
@@ -180,9 +159,6 @@ class OkReflect {
      * @param methodName: the name of the method that you want to call.
      * @param args: The parameters of the method that you wan to call.
      *
-     *
-
-     *
      * Call the method that you want to call.
      * The method will be called when [get] method called.
      * The method will be call with the return value from last method.
@@ -261,6 +237,9 @@ class OkReflect {
         accessible(field).set(instance, arg)
     }
 
+    /**
+     * Initialize the target field value.
+     */
     private fun initFieldValue() {
         if (targetFieldName != null) {
             val field = instance!!.javaClass.getDeclaredField(targetFieldName)
@@ -336,6 +315,9 @@ class OkReflect {
         return getByFlag<T>(RETURN_FLAG_FIELD)
     }
 
+    /**
+     * Return value by flag.
+     */
     private fun <T> getByFlag(returnFlag: Int): T? {
         return try {
             realGet(returnFlag)
@@ -560,6 +542,21 @@ class OkReflect {
     }
 
     companion object {
+
+        /**
+         * Return the return value from the method that you invoked.
+         */
+        private const val RETURN_FLAG_RESULT = 1
+
+        /**
+         * Return the instance.
+         */
+        private const val RETURN_FLAG_INSTANCE = 2
+
+        /**
+         * Return the field.
+         */
+        private const val RETURN_FLAG_FIELD = 3
 
         /**
          * Set the class name of the instance/
