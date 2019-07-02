@@ -11,7 +11,7 @@ plugins {
 }
 
 group 'com.github.zeshaoaaa'
-version '0.0.3'
+version '0.0.4'
 
 sourceCompatibility = 1.8
 
@@ -74,18 +74,6 @@ wrapper {
     }
 }
 
-task sourcesJar(type: Jar, dependsOn: project.classes) {
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: project.javadoc) {
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar, javadocJar
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -116,6 +104,21 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }*/
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
 
 
 
