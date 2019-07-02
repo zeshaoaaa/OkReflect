@@ -7,7 +7,7 @@ import java.lang.reflect.*
  * If you encounter some problem or you have some suggestion for me, you can post an issue,
  * I will solve it for you as soon as possible.
  *
- * @author <a href="">zeshaoaaa</a>
+ * @author <a href="https://github.com/zeshaoaaa">zeshaoaaa</a>
  *
  */
 class OkReflect {
