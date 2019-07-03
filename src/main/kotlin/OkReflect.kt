@@ -23,6 +23,11 @@ class OkReflect {
     private var constructorArgs: Array<out Any>? = null
 
     /**
+     * Indicate that create() method called or not.
+     */
+    private var createCalled = false
+
+    /**
      * All the method that you called will store with this map.
      */
     private var methodCallList: ArrayList<MethodCall>? = null
@@ -84,6 +89,7 @@ class OkReflect {
      * Set the parameters of the constructor of the class that you want to create.
      */
     fun create(vararg args: Any): OkReflect {
+        this.createCalled = true
         this.constructorArgs = args
         return this
     }
@@ -233,17 +239,30 @@ class OkReflect {
      * @param arg: The value that you want to set to the field.
      */
     private fun setField(fieldName: String, arg: Any) {
-        val field = instance!!.javaClass.getDeclaredField(fieldName)
-        accessible(field).set(instance, arg)
+        if (instance != null) {
+            val field = instance!!.javaClass.getDeclaredField(fieldName)
+            accessible(field).set(instance, arg)
+        } else {
+            val field = clazz!!.getDeclaredField(fieldName)
+            val fieldObj = accessible(field).get(null)
+            accessible(field).set(fieldObj, arg)
+        }
     }
 
     /**
      * Initialize the target field value.
      */
     private fun initFieldValue() {
-        if (targetFieldName != null) {
-            val field = instance!!.javaClass.getDeclaredField(targetFieldName)
-            targetFieldValue = accessible(field).get(instance)
+        targetFieldValue = if (targetFieldName != null) {
+            if (instance == null) {
+                val field = clazz!!.getDeclaredField(targetFieldName)
+                accessible(field)[instance]
+            } else {
+                val field = instance!!.javaClass.getDeclaredField(targetFieldName)
+                accessible(field).get(instance)
+            }
+        } else {
+            null
         }
     }
 
@@ -328,35 +347,42 @@ class OkReflect {
     }
 
     /**
-     * Initialize the instance and invoke the methods that you called.
+     * Initialize the instance and invoke the methods that you called
+     * and set or get the field that you want.
      */
     private fun <T> realGet(returnFlag: Int): T? {
-        return if (clazz == null && className == null && className!!.isEmpty()) {
-            throw java.lang.NullPointerException("you must specify the className or class.")
-        } else {
-            if (clazz == null) {
-                this.clazz = Class.forName(className!!)
+        val needInstance = returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT
+        val noClass = clazz == null && className == null && className!!.isEmpty()
+        if (needInstance) {
+            if (noClass) {
+                throw java.lang.NullPointerException(
+                    "you must specify the className or class."
+                )
             }
-            if (constructorArgs != null) {
-                initInstance()
-                invokeMethods()
-                setFields()
-                initFieldValue()
-                getByResult<T>(returnFlag)
-            } else {
-                throw NullPointerException("you have to call create() method, or else you will get nothing.")
+            if (constructorArgs == null) {
+                throw NullPointerException(
+                    "you have to call create() method, or else you will get nothing."
+                )
             }
         }
+        if (clazz == null) {
+            this.clazz = Class.forName(className!!)
+        }
+        if (createCalled) {
+            initInstance()
+            invokeMethods()
+        }
+        setFields()
+        initFieldValue()
+        return getByResult<T>(returnFlag)
     }
 
     /**
      * Invoke all the methods that you called.
      */
     private fun invokeMethods() {
-        if (methodCallList != null && methodCallList!!.size > 0) {
-            methodCallList?.forEach {
-                invoke(it)
-            }
+        methodCallList?.forEach {
+            invoke(it)
         }
     }
 
@@ -504,12 +530,8 @@ class OkReflect {
      * Change the accessibility of the methods and constructors.
      */
     private fun <T : AccessibleObject> accessible(accessible: T): T {
-        if (accessible is Member) {
-            val isPublic = Modifier.isPublic(accessible.modifiers) &&
-                    Modifier.isPublic(accessible.declaringClass.modifiers)
-            if (isPublic) {
-                return accessible
-            }
+        if (accessible is Member && isPublic(accessible)) {
+            return accessible
         }
 
         if (!accessible.isAccessible) {
@@ -517,6 +539,11 @@ class OkReflect {
         }
 
         return accessible
+    }
+
+    private fun isPublic(accessible: Member): Boolean {
+        return Modifier.isPublic(accessible.modifiers) &&
+                Modifier.isPublic(accessible.declaringClass.modifiers)
     }
 
     /**

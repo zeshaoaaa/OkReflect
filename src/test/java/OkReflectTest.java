@@ -110,6 +110,10 @@ public class OkReflectTest {
         Assert.assertEquals(result, 1);
     }
 
+    public interface StringProxy {
+        String substring(int beginIndex);
+    }
+
     @Test
     public void testDynamicProxy() {
         String substring = OkReflect.on("java.lang.String")
@@ -123,18 +127,13 @@ public class OkReflectTest {
     public void testStringToJavaFile() {
     }
 
-    public interface StringProxy {
-        String substring(int beginIndex);
-    }
-
     @Test
-    public void testSetField() {
-        char[] value = OkReflect.on("java.lang.String")
-                .create()
-                .set("value", "Alex".toCharArray())
-                .getField("value");
+    public void testSetAndGetStaticField() {
+        int i = OkReflect.on("TestClass")
+                .set("i", 6)
+                .getField("i");
+        assert i == 6;
         System.out.println("");
-
     }
 
 }

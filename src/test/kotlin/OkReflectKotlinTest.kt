@@ -138,6 +138,14 @@ class OkReflectKotlinTest {
     }
 
     @Test
+    fun testSetAndGetStaticField() {
+        val staticField: Int? = OkReflect.on("TestClass")
+            .set("staticField", 6)
+            .getField("staticField")
+        println("")
+    }
+
+    @Test
     fun testStringToJavaFile() {
     }
 

@@ -59,6 +59,11 @@ char[] value = OkReflect.on("java.lang.String")
                 .set("value", "Alex".toCharArray())
                 .getField("value");
 
+// 获取和设置静态字段的值
+int staticField = OkReflect.on("TestClass")
+                .set("staticField", 6)
+                .getField("staticField");
+
 // 动态代理第一步：声明接口
 public interface StringProxy {
   String substring(int beginIndex);
@@ -117,11 +122,16 @@ val str = OkReflect
             })
             .get<String>()
 
-// 获取与设置字段的值
+// 获取和设置字段的值
 val value = OkReflect.on("java.lang.String")
             .create()
             .set("value", "Alex".toCharArray())
             .getField<CharArray>("value")
+
+// 获取设置静态字段的值
+val staticField: Int? = OkReflect.on("TestClass")
+            .set("staticField", 6)
+            .getField("staticField")
 
 // 动态代理第一步：声明接口
 interface StringProxy {

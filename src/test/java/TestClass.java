@@ -4,6 +4,8 @@ public class TestClass {
     private final String nickname = "666";
     private byte b;
     public char c = 'a';
+    private final int i = 10;
+    private  Integer i2 = 12;
 
     public TestClass() {
 

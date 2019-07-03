@@ -47,6 +47,11 @@ char[] value = OkReflect.on("java.lang.String")
                 .set("value", "Alex".toCharArray())
                 .getField("value");
 
+// Get and set static field value
+int staticField = OkReflect.on("TestClass")
+                .set("staticField", 6)
+                .getField("staticField");
+
 // Handle the exception with callback
 String str = OkReflect
                 .on("java.lang.String")
@@ -119,10 +124,13 @@ val str = OkReflect
             .get<String>()
 
 // Get and set field value
-val value = OkReflect.on("java.lang.String")
-            .create()
-            .set("value", "Alex".toCharArray())
-            .getField<CharArray>("value")
+long serialVersionUID = OkReflect.on("java.lang.String")
+                .getField("serialVersionUID");
+
+// Get and set static field value
+val staticField: Int? = OkReflect.on("TestClass")
+            .set("staticField", 6)
+            .getField("staticField")
 
 // First step of using dynamic proxy: declare the interface
 interface StringProxy {
