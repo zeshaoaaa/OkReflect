@@ -162,7 +162,7 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:0.0.4'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.0.6'
 }
 ```
 ### Maven
@@ -178,6 +178,6 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.zeshaoaaa</groupId>
 	    <artifactId>OkReflect</artifactId>
-	    <version>0.0.4</version>
+	    <version>0.0.6</version>
 	</dependency>
 ```
