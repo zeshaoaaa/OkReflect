@@ -128,7 +128,7 @@ val value = OkReflect.on("java.lang.String")
             .set("value", "Alex".toCharArray())
             .getField<CharArray>("value")
 
-// 获取设置静态字段的值
+// 获取和设置静态字段的值
 val staticField: Int? = OkReflect.on("TestClass")
             .set("staticField", 6)
             .getField("staticField")
