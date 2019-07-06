@@ -1,3 +1,5 @@
+import MethodGetter.Companion.getConstructor
+import MethodGetter.Companion.getMethod
 import java.lang.reflect.*
 
 /**
@@ -98,28 +100,13 @@ class OkReflect {
      * Initialized the instance.
      */
     private fun initInstance() {
-        val constructor = getConstructor()
+        val constructor = getConstructor(clazz, constructorArgs)
         val instance = if (constructorArgs == null) {
             constructor!!.newInstance()
         } else {
             constructor!!.newInstance(*constructorArgs!!)
         }
         this.instance = instance
-    }
-
-    /**
-     * Get the constructor of the class.
-     */
-    private fun getConstructor(): Constructor<out Any>? {
-        val declared =
-            if (constructorArgs != null && constructorArgs!!.isNotEmpty()) {
-                val types = getConversedParametersType(constructorArgs!!)
-                clazz!!.getDeclaredConstructor(*types)
-            } else {
-                clazz!!.getDeclaredConstructor()
-            }
-
-        return accessible(declared)
     }
 
     /**
@@ -147,7 +134,6 @@ class OkReflect {
         this.errorCallback = okReflectErrorCallback
         return this
     }
-
 
     /**
      * @param methodName: the name of the method that you want to call.
@@ -203,37 +189,6 @@ class OkReflect {
         return this
     }
 
-
-    /**
-     * @param methodCall: This object include the name of the method, whether
-     * call the method with instance or not, and parameters for invoking the method.
-     *
-     * Invoke the the method that you called by call() method.
-     */
-    private fun invoke(methodCall: MethodCall) {
-        val args = methodCall.args
-        val method = getMethod(methodCall.methodName, args)
-        val withInstance = methodCall.callWithInstance
-        val returnType = method!!.returnType.toString()
-        if (returnType == "void") {
-            method.invoke(instance, *args)
-        } else {
-            result = if (withInstance) {
-                method.invoke(instance, *args)
-            } else {
-                if (result != null) {
-                    method.invoke(result, *args)
-                } else {
-                    throw java.lang.NullPointerException(
-                        "you cannot call the method " +
-                                "with the return value of last method when it's null."
-                    )
-                }
-            }
-        }
-
-    }
-
     /**
      * @param fieldName: The name of the field.
      * @param arg: The value that you want to set to the field.
@@ -246,6 +201,40 @@ class OkReflect {
             val field = clazz!!.getDeclaredField(fieldName)
             val fieldObj = accessible(field).get(null)
             accessible(field).set(fieldObj, arg)
+        }
+    }
+
+    /**
+     * @param methodCall: This object include the name of the method, whether
+     * call the method with instance or not, and parameters for invoking the method.
+     *
+     * Invoke the the method that you called by call() method.
+     */
+    private fun invoke(methodCall: MethodCall) {
+        val args = methodCall.args
+        val method = getMethod(clazz, methodCall.methodName, args)
+        val withInstance = methodCall.callWithInstance
+        val returnType = method!!.returnType.toString()
+        if (returnType == "void") {
+            method.invoke(instance, *args)
+        } else {
+            result = if (withInstance) {
+                method.invoke(instance, *args)
+            } else {
+                verifyResult()
+                method.invoke(result, *args)
+            }
+        }
+
+    }
+
+    /**
+     * When calling method with result, then the result must exists.
+     */
+    private fun verifyResult() {
+        if (result == null) {
+            throw java.lang.NullPointerException(
+                "you cannot call the method with the return value of last method when it's null.")
         }
     }
 
@@ -291,7 +280,7 @@ class OkReflect {
     }
 
     /**
-     * @param msg: The error message that you want to output.
+     * @param e: The exception that you want to output.
      *
      * Print the exception message.
      * If you have already pass the ErrorCallback into onError method,
@@ -352,18 +341,9 @@ class OkReflect {
      */
     private fun <T> realGet(returnFlag: Int): T? {
         val needInstance = returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT
-        val noClass = clazz == null && className == null && className!!.isEmpty()
         if (needInstance) {
-            if (noClass) {
-                throw java.lang.NullPointerException(
-                    "you must specify the className or class."
-                )
-            }
-            if (constructorArgs == null) {
-                throw NullPointerException(
-                    "you have to call create() method, or else you will get nothing."
-                )
-            }
+            verifyClassInfo()
+            verifyConstructorArgs()
         }
         if (clazz == null) {
             this.clazz = Class.forName(className!!)
@@ -375,6 +355,28 @@ class OkReflect {
         setFields()
         initFieldValue()
         return getByResult<T>(returnFlag)
+    }
+
+    /**
+     * If there is no constructor paramters, there will throw an exception
+     */
+    private fun verifyConstructorArgs() {
+        if (constructorArgs == null) {
+            throw NullPointerException(
+                "you have to call create() method, or else you will get nothing."
+            )
+        }
+    }
+
+    /**
+     * If there is no class info, there will throw an exception
+     */
+    private fun verifyClassInfo() {
+        if (clazz == null && className == null && className!!.isEmpty()) {
+            throw java.lang.NullPointerException(
+                "you must specify the className or class."
+            )
+        }
     }
 
     /**
@@ -392,158 +394,6 @@ class OkReflect {
                 setField(it.key, it.value)
             }
         }
-    }
-
-
-    /**
-     * @Param args: Variable arguments of constructor or method of the class.
-     *
-     * Get the classes of arguments cof constructor or method of the class.
-     */
-    private fun getParametersType(args: Array<out Any>): Array<Class<*>?> {
-        val result = arrayOfNulls<Class<*>>(args.size)
-        for (i in args.indices) {
-            result[i] = args[i]::class.java
-        }
-        return result
-    }
-
-    /**
-     * @Param args: Variable arguments of constructor or method of the class.
-     *
-     * Get the classes of arguments cof constructor or method of the class.
-     */
-    private fun getConversedParametersType(args: Array<out Any>): Array<Class<*>?> {
-        val result = arrayOfNulls<Class<*>>(args.size)
-        for (i in args.indices) {
-            // When the parameters type is int, Kotlin will take it as Integer,
-            // so I specify the type as primitive type,
-            // I have not found another solution to solve this problem , if you have
-            // any idea or suggestion, you can contact me.
-            result[i] = when (args[i]) {
-                is Byte -> Byte::class.java
-                is Short -> Short::class.java
-                is Char -> Char::class.java
-                is Int -> Int::class.java
-                is Long -> Long::class.java
-                is Float -> Float::class.java
-                is Double -> Double::class.java
-                is Boolean -> Boolean::class.java
-                else -> args[i]::class.java
-            }
-        }
-        return result
-    }
-
-
-    /**
-     *
-     * @param name: The name of the method you want to call.
-     * @param args: Parameters that use to call the method.
-     *
-     * Get method by the method name you've passed.
-     */
-    private fun getMethod(name: String, args: Array<out Any>): Method? {
-
-        var exception: Exception? = null
-        var method: Method? = null
-
-        try {
-            method = getDeclaredMethod(name, args)
-        } catch (e: Exception) {
-            exception = e
-        }
-
-        if (method == null) {
-            try {
-                method = getNonDeclaredMethod(name, args)
-            } catch (e: Exception) {
-                exception = e
-            }
-        }
-        return when {
-            method != null -> accessible(method)
-            else -> {
-                exception?.let {
-                    throw it
-                }
-                return null
-            }
-        }
-    }
-
-    /**
-     * Get method.
-     */
-    private fun getNonDeclaredMethod(name: String, args: Array<out Any>): Method? {
-        var exception: Exception? = null
-        var method: Method? = null
-
-        try {
-            val types = getParametersType(args)
-            method = clazz!!.getMethod(name, *types)
-        } catch (e: Exception) {
-            exception = e
-        }
-
-        if (method == null) {
-            try {
-                val types = getConversedParametersType(args)
-                method = clazz!!.getMethod(name, *types)
-            } catch (e: Exception) {
-                exception = e
-            }
-        }
-        if (method == null) {
-            throw exception!!
-        }
-        return method
-    }
-
-    /**
-     * Get declared method.
-     */
-    private fun getDeclaredMethod(name: String, args: Array<out Any>): Method? {
-        var exception: Exception? = null
-        var declared: Method? = null
-        try {
-            val types = getParametersType(args)
-            declared = clazz!!.getDeclaredMethod(name, *types)
-        } catch (e: Exception) {
-            exception = e
-        }
-
-        if (declared == null) {
-            try {
-                val types = getConversedParametersType(args)
-                declared = clazz!!.getDeclaredMethod(name, *types)
-            } catch (e: Exception) {
-                exception = e
-            }
-        }
-        if (declared == null) {
-            throw exception!!
-        } else return declared
-    }
-
-    /**
-     * Change the accessibility of the methods and constructors.
-     */
-    private fun <T : AccessibleObject> accessible(accessible: T): T {
-        if (accessible is Member && isPublic(accessible)) {
-            return accessible
-        }
-
-        if (!accessible.isAccessible) {
-            accessible.isAccessible = true
-        }
-
-        return accessible
-    }
-
-    private fun isPublic(accessible: Member): Boolean {
-        return Modifier.isPublic(accessible.modifiers) &&
-                Modifier.isPublic(accessible.declaringClass.modifiers)
     }
 
     /**
@@ -602,14 +452,39 @@ class OkReflect {
         }
 
         /**
+         * Change the accessibility of the methods and constructors.
+         */
+        fun <T : AccessibleObject> accessible(accessible: T): T {
+            if (accessible is Member && isPublic(accessible)) {
+                return accessible
+            }
+
+            if (!accessible.isAccessible) {
+                accessible.isAccessible = true
+            }
+
+            return accessible
+        }
+
+        /**
+         * This method will return whether the Member is public or not.
+         */
+        private fun isPublic(accessible: Member): Boolean {
+            return Modifier.isPublic(accessible.modifiers) &&
+                    Modifier.isPublic(accessible.declaringClass.modifiers)
+        }
+
+        /**
          * @param path: The path and name of the class.
          * @param content: The content of the class.
          * @param options: The options use for compile.
          *
          * Compile content to class.
+         *
+         * Note: This method is working on progress.
          */
         @JvmStatic
-        fun compile(path: String, content: String, options: OkCompileOptions) {
+        private fun compile(path: String, content: String, options: OkCompileOptions) {
             OkCompiler.compile(path, content, options)
         }
 
@@ -617,10 +492,9 @@ class OkReflect {
          * @see [compile]
          */
         @JvmStatic
-        fun compile(path: String, content: String) {
+        private fun compile(path: String, content: String) {
             compile(path, content, OkCompileOptions())
         }
-
 
     }
 
@@ -632,6 +506,5 @@ class OkReflect {
         fun onError(e: Exception)
     }
 
-    class MethodCall(val methodName: String, val callWithInstance: Boolean, val args: Array<out Any>)
 
 }

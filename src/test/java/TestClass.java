@@ -1,10 +1,11 @@
 public class TestClass {
 
+    private int age;
     private String name = "default";
     private final String nickname = "666";
     private byte b;
     public char c = 'a';
-    private final int i = 10;
+    private static int i = 10;
     private  Integer i2 = 12;
 
     public TestClass() {
@@ -13,6 +14,11 @@ public class TestClass {
 
     public TestClass(String name) {
         this.name = name;
+    }
+
+    private TestClass(String name, int age) {
+        this.name = name;
+        this.age = age;
     }
 
     private String getName() {
