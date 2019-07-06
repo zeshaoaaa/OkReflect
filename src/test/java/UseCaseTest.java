@@ -179,4 +179,11 @@ public class UseCaseTest {
         assert finalField.equals("changed");
     }
 
+    @Test
+    public void testGetClass() {
+        Class clazz = OkReflect.on("TestClass")
+                .getClazz();
+        assert clazz.equals(TestClass.class);
+    }
+
 }

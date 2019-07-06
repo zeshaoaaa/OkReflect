@@ -234,7 +234,8 @@ class OkReflect {
     private fun verifyResult() {
         if (result == null) {
             throw java.lang.NullPointerException(
-                "you cannot call the method with the return value of last method when it's null.")
+                "you cannot call the method with the return value of last method when it's null."
+            )
         }
     }
 
@@ -308,6 +309,18 @@ class OkReflect {
     }
 
     /**
+     * Get the class.
+     */
+    fun getClazz(): Class<*>? {
+        return try {
+            realGet(RETURN_FLAG_CLASS)
+        } catch (e: java.lang.Exception) {
+            printError(e)
+            null
+        }
+    }
+
+    /**
      * Get the instance no matter result have value or not.
      */
     fun <T> getInstance(): T? {
@@ -358,7 +371,7 @@ class OkReflect {
     }
 
     /**
-     * If there is no constructor paramters, there will throw an exception
+     * If there is no constructor parameters, there will throw an exception
      */
     private fun verifyConstructorArgs() {
         if (constructorArgs == null) {
@@ -412,7 +425,8 @@ class OkReflect {
                         instance as T
                     }
                 }
-                else -> instance as T
+                RETURN_FLAG_INSTANCE -> instance as T
+                else -> clazz as T
             }
         } catch (e: Exception) {
             printError(e)
