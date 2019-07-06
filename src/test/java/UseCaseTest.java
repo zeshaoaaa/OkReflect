@@ -149,4 +149,34 @@ public class UseCaseTest {
         System.out.println("");
     }
 
+    @Test
+    public void testOriginalSetFinalField() {
+        /*String finalField = OkReflect.on("TestClass")
+                .set("finalString", "changed")
+                .getField("finalString");*/
+        Field finalField = null;
+        try {
+            TestClass testClass = new TestClass();
+            Class clazz = testClass.getClass();
+            finalField = clazz.getDeclaredField("finalString");
+            finalField.setAccessible(true);
+            finalField.set(testClass, "changed");
+            String result = (String) finalField.get(testClass);
+            assert result.equals("changed");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testSetFinalFieldByOkReflect() {
+        String finalField = OkReflect.on("TestClass")
+                .create()
+                .set("finalString", "changed")
+                .getField("finalString");
+        assert finalField.equals("changed");
+    }
+
 }

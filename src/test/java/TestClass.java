@@ -2,6 +2,7 @@ public class TestClass {
 
     private int age;
     private String name = "default";
+    private final String finalString = "finalString";
     private final String nickname = "666";
     private byte b;
     public char c = 'a';

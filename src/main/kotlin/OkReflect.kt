@@ -198,8 +198,8 @@ class OkReflect {
             val field = instance!!.javaClass.getDeclaredField(fieldName)
             accessible(field).set(instance, arg)
         } else {
-            val field = clazz!!.getDeclaredField(fieldName)
-            val fieldObj = accessible(field).get(null)
+            val field = accessible(clazz!!.getDeclaredField(fieldName))
+            val fieldObj = field.get(null)
             accessible(field).set(fieldObj, arg)
         }
     }
@@ -402,6 +402,9 @@ class OkReflect {
     private fun <T> getByResult(returnFlag: Int): T? {
         return try {
             when (returnFlag) {
+                RETURN_FLAG_FIELD -> {
+                    targetFieldValue as T
+                }
                 RETURN_FLAG_RESULT -> {
                     if (result != null) {
                         result as T
@@ -409,8 +412,7 @@ class OkReflect {
                         instance as T
                     }
                 }
-                RETURN_FLAG_INSTANCE -> instance as T
-                else -> targetFieldValue as T
+                else -> instance as T
             }
         } catch (e: Exception) {
             printError(e)
@@ -421,9 +423,9 @@ class OkReflect {
     companion object {
 
         /**
-         * Return the return value from the method that you invoked.
+         * Return the class.
          */
-        private const val RETURN_FLAG_RESULT = 1
+        private const val RETURN_FLAG_CLASS = 1
 
         /**
          * Return the instance.
@@ -431,9 +433,14 @@ class OkReflect {
         private const val RETURN_FLAG_INSTANCE = 2
 
         /**
+         * Return the return value from the method that you invoked.
+         */
+        private const val RETURN_FLAG_RESULT = 3
+
+        /**
          * Return the field.
          */
-        private const val RETURN_FLAG_FIELD = 3
+        private const val RETURN_FLAG_FIELD = 4
 
         /**
          * Set the class name of the instance/
