@@ -1,3 +1,4 @@
+import okreflect.OkReflect;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class UseCaseTest {
     public void testCreateInstanceByPrivateConstructor() {
         String name = OkReflect.on("TestClass")
                 .create("Tom", 11)
-                .getField("name");
+                .get("name");
 
         Assert.assertTrue(name.equals("Tom"));
     }
@@ -144,16 +145,13 @@ public class UseCaseTest {
     public void testSetAndGetStaticField() {
         int i = OkReflect.on("TestClass")
                 .set("i", 6)
-                .getField("i");
+                .get("i");
         assert i == 6;
         System.out.println("");
     }
 
     @Test
     public void testOriginalSetFinalField() {
-        /*String finalField = OkReflect.on("TestClass")
-                .set("finalString", "changed")
-                .getField("finalString");*/
         Field finalField = null;
         try {
             TestClass testClass = new TestClass();
@@ -171,11 +169,19 @@ public class UseCaseTest {
     }
 
     @Test
-    public void testSetFinalFieldByOkReflect() {
+    public void testSetFinalFieldOfInstance() {
         String finalField = OkReflect.on("TestClass")
                 .create()
                 .set("finalString", "changed")
-                .getField("finalString");
+                .get("finalString");
+        assert finalField.equals("changed");
+    }
+
+    @Test
+    public void testSetFinalFieldOfClass() {
+        String finalField = OkReflect.on("TestClass")
+                .set("finalString", "changed")
+                .get("finalString");
         assert finalField.equals("changed");
     }
 
@@ -187,12 +193,21 @@ public class UseCaseTest {
     }
 
     @Test
-    public void testSetStaticFinalField() {
+    public void testSetStaticFinalFieldOfInstance() {
         String finalField = OkReflect.on("TestClass")
                 .create()
                 .set("staticFinalField", "changed")
-                .getField("staticFinalField");
+                .get("staticFinalField");
         assert finalField.equals("changed");
     }
+
+    @Test
+    public void testSetStaticFinalFieldOfClass() {
+        String finalField = OkReflect.on("TestClass")
+                .set("staticFinalField", "changed")
+                .get("staticFinalField");
+        assert finalField.equals("changed");
+    }
+
 
 }

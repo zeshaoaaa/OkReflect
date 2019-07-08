@@ -125,12 +125,12 @@ val str = OkReflect
 
 // Get and set field value
 long serialVersionUID = OkReflect.on("java.lang.String")
-                .getField("serialVersionUID");
+                .get("serialVersionUID");
 
 // Get and set static field value
 val staticField: Int? = OkReflect.on("TestClass")
             .set("staticField", 6)
-            .getField("staticField")
+            .get("staticField")
 
 // First step of using dynamic proxy: declare the interface
 interface StringProxy {
@@ -159,7 +159,7 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:0.0.8'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.0.9'
 }
 ```
 ### Maven
@@ -175,6 +175,6 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.zeshaoaaa</groupId>
 	    <artifactId>OkReflect</artifactId>
-	    <version>0.0.8</version>
+	    <version>0.0.9</version>
 	</dependency>
 ```

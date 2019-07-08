@@ -1,4 +1,5 @@
 package okreflect
+
 import okreflect.MethodGetter.Companion.getConstructor
 import okreflect.MethodGetter.Companion.getMethod
 import java.lang.reflect.*
@@ -196,13 +197,36 @@ class OkReflect {
      */
     private fun setField(fieldName: String, arg: Any) {
         if (instance != null) {
-            val field = instance!!.javaClass.getDeclaredField(fieldName)
-            accessible(field).set(instance, arg)
+            setFieldOfInstance(fieldName, arg)
+
         } else {
-            val field = accessible(clazz!!.getDeclaredField(fieldName))
+            var field = clazz!!.getDeclaredField(fieldName)
+            field = accessible(field)
             val fieldObj = field.get(null)
             accessible(field).set(fieldObj, arg)
         }
+    }
+
+    /**
+     * @param fieldName: The name of the field that you want to set.
+     * @param arg: The value of the field that you want to sef.
+     *
+     * Set the field of the instance.
+     */
+    private fun setFieldOfInstance(fieldName: String, arg: Any) {
+        val osName = System.getProperty("os.name")
+        var field = instance!!.javaClass.getDeclaredField(fieldName)
+        field = accessible(field)
+        if (osName != "Linux") {
+            removeFinalModifier(field)
+        }
+        field.set(instance, arg)
+    }
+
+    private fun removeFinalModifier(field: Field) {
+        var modifiers = Field::class.java.getDeclaredField("modifiers")
+        modifiers = accessible(modifiers)
+        modifiers.setInt(field, field.modifiers and Modifier.FINAL.inv())
     }
 
     /**
@@ -301,24 +325,25 @@ class OkReflect {
      * or else you will get the instance.
      */
     fun <T> get(): T? {
-        return try {
-            realGet(RETURN_FLAG_RESULT)
-        } catch (e: Exception) {
-            printError(e)
-            null
-        }
+        return getByFlag(RETURN_FLAG_RESULT)
+    }
+
+    /**
+     * @param fieldName: The name of the field that you want to get.
+     *
+     * Get the result value from last method if it has a return value,
+     * or else you will get the instance.
+     */
+    fun <T> get(fieldName: String): T? {
+        targetFieldName = fieldName
+        return getByFlag<T>(RETURN_FLAG_FIELD)
     }
 
     /**
      * Get the class.
      */
     fun getClazz(): Class<*>? {
-        return try {
-            realGet(RETURN_FLAG_CLASS)
-        } catch (e: java.lang.Exception) {
-            printError(e)
-            null
-        }
+        return getByFlag(RETURN_FLAG_CLASS)
     }
 
     /**
@@ -326,15 +351,6 @@ class OkReflect {
      */
     fun <T> getInstance(): T? {
         return getByFlag<T>(RETURN_FLAG_INSTANCE)
-
-    }
-
-    /**
-     * Get the field from the instance.
-     */
-    fun <T> getField(fieldName: String): T? {
-        targetFieldName = fieldName
-        return getByFlag<T>(RETURN_FLAG_FIELD)
     }
 
     /**

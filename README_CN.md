@@ -126,12 +126,12 @@ val str = OkReflect
 val value = OkReflect.on("java.lang.String")
             .create()
             .set("value", "Alex".toCharArray())
-            .getField<CharArray>("value")
+            .get<CharArray>("value")
 
 // 获取和设置静态字段的值
 val staticField: Int? = OkReflect.on("TestClass")
             .set("staticField", 6)
-            .getField("staticField")
+            .get("staticField")
 
 // 动态代理第一步：声明接口
 interface StringProxy {
@@ -162,7 +162,7 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:0.0.8'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.0.9'
 }
 ```
 ### Maven
@@ -178,6 +178,6 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.zeshaoaaa</groupId>
 	    <artifactId>OkReflect</artifactId>
-	    <version>0.0.8</version>
+	    <version>0.0.9</version>
 	</dependency>
 ```

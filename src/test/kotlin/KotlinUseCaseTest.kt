@@ -1,11 +1,13 @@
 import com.sun.source.tree.AssertTree
+import okreflect.OkReflect
 import org.junit.Assert
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import java.lang.NullPointerException
+import java.lang.reflect.Field
 import kotlin.math.exp
 
-class OkReflectKotlinTest {
+class KotlinUseCaseTest {
 
     // Test whether OkReflect can create instance with constructor that have parameter.
     @Test
@@ -22,6 +24,15 @@ class OkReflectKotlinTest {
             .create("test")
             .get<String>()
         Assert.assertEquals(str, "test")
+    }
+
+    @Test
+    fun testCreateInstanceByPrivateConstructor() {
+        val name = OkReflect.on("TestClass")
+            .create("Tom", 11)
+            .get<String>("name")
+
+        Assert.assertTrue(name == "Tom")
     }
 
     private var expectedException = ExpectedException.none()
@@ -63,16 +74,6 @@ class OkReflectKotlinTest {
             .call("substring", 6)
             .getInstance<String>()
         Assert.assertEquals(str, "Hello world")
-    }
-
-    @Test
-    fun testHandleExceptionWithFunction() {
-        val str = OkReflect
-            .on("java.lang.String")
-            .error {
-                Assert.assertTrue(it.toString().contains("you have to call create()"))
-            }
-            .get<String>()
     }
 
     @Test
@@ -129,24 +130,64 @@ class OkReflectKotlinTest {
     }
 
     @Test
-    fun testSetField() {
-        val value = OkReflect.on("java.lang.String")
-            .create()
-            .set("value", "Alex".toCharArray())
-            .getField<CharArray>("value")
-        println("")
+    fun testStringToJavaFile() {
     }
 
     @Test
     fun testSetAndGetStaticField() {
-        val staticField: Int? = OkReflect.on("TestClass")
-            .set("staticField", 6)
-            .getField("staticField")
+        val i = OkReflect.on("TestClass")
+            .set("i", 6)
+            .get<Int>("i")!!
+        assert(i == 6)
         println("")
     }
 
     @Test
-    fun testStringToJavaFile() {
+    fun testOriginalSetFinalField() {
+        /*String finalField = OkReflect.on("TestClass")
+                .set("finalString", "changed")
+                .getField("finalString");*/
+        var finalField: Field? = null
+        try {
+            val testClass = TestClass()
+            val clazz = testClass.javaClass
+            finalField = clazz.getDeclaredField("finalString")
+            finalField!!.isAccessible = true
+            finalField.set(testClass, "changed")
+            val result = finalField.get(testClass) as String
+            assert(result == "changed")
+        } catch (e: NoSuchFieldException) {
+            e.printStackTrace()
+        } catch (e: IllegalAccessException) {
+            e.printStackTrace()
+        }
+
     }
+
+    @Test
+    fun testSetFinalFieldByOkReflect() {
+        val finalField = OkReflect.on("TestClass")
+            .create()
+            .set("finalString", "changed")
+            .get<String>("finalString")
+        assert(finalField == "changed")
+    }
+
+    @Test
+    fun testGetClass() {
+        val clazz = OkReflect.on("TestClass")
+            .getClazz()
+        assert(clazz == TestClass::class.java)
+    }
+
+    @Test
+    fun testSetStaticFinalField() {
+        val finalField = OkReflect.on("TestClass")
+            .create()
+            .set("staticFinalField", "changed")
+            .get<String>("staticFinalField")
+        assert(finalField == "changed")
+    }
+
 
 }
