@@ -1,4 +1,6 @@
-import OkReflect.Companion.accessible
+package okreflect
+
+import okreflect.OkReflect.Companion.accessible
 import java.lang.reflect.*
 
 /**

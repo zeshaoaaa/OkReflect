@@ -1,5 +1,6 @@
-import MethodGetter.Companion.getConstructor
-import MethodGetter.Companion.getMethod
+package okreflect
+import okreflect.MethodGetter.Companion.getConstructor
+import okreflect.MethodGetter.Companion.getMethod
 import java.lang.reflect.*
 
 /**

@@ -1,3 +1,5 @@
+package okreflect
+
 /**
  * This class responsible for compile string to Java file.
  */

@@ -186,4 +186,13 @@ public class UseCaseTest {
         assert clazz.equals(TestClass.class);
     }
 
+    @Test
+    public void testSetStaticFinalField() {
+        String finalField = OkReflect.on("TestClass")
+                .create()
+                .set("staticFinalField", "changed")
+                .getField("staticFinalField");
+        assert finalField.equals("changed");
+    }
+
 }
