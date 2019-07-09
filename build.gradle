@@ -15,7 +15,7 @@ version '0.1.1'
 
 sourceCompatibility = 1.8
 
-repositories {  
+repositories {
     mavenCentral()
     jcenter()
 }
@@ -55,7 +55,7 @@ artifacts {
 uploadArchives {
     repositories.mavenDeployer {
         // 本地仓库路径
-        repository(url:"file:///users/oushaoze/.m2/repository/")
+        repository(url: "file:///users/oushaoze/.m2/repository/")
         // 唯一标识
         pom.groupId = "local.okreflect"
         // 项目名称
