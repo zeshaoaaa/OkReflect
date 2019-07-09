@@ -72,6 +72,11 @@ class OkReflect {
     private var result: Any? = null
 
     /**
+     * Whether call methods with outer instance or not.
+     */
+    private var withOuterInstance = false
+
+    /**
      * @param className: The name of the class that you want to create.
      *
      * Constructor of OkReflect.
@@ -87,6 +92,17 @@ class OkReflect {
      */
     constructor(clazz: Class<String>) {
         this.clazz = clazz
+    }
+
+    /**
+     * @param instance: The instance that you want to use for calling methods.
+     *
+     * Constructor of OkReflect.
+     */
+    constructor(instance: Any) {
+        withOuterInstance = true
+        this.instance = instance
+        this.clazz = instance.javaClass
     }
 
     /**
@@ -370,16 +386,20 @@ class OkReflect {
      * and set or get the field that you want.
      */
     private fun <T> realGet(returnFlag: Int): T? {
-        val needInstance = returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT
-        if (needInstance) {
-            verifyClassInfo()
-            verifyConstructorArgs()
-        }
-        if (clazz == null) {
-            this.clazz = Class.forName(className!!)
-        }
-        if (createCalled) {
-            initInstance()
+        if (!withOuterInstance) {
+            val needInstance = returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT
+            if (needInstance) {
+                verifyClassInfo()
+                verifyConstructorArgs()
+            }
+            if (clazz == null) {
+                this.clazz = Class.forName(className!!)
+            }
+            if (createCalled) {
+                initInstance()
+                invokeMethods()
+            }
+        } else {
             invokeMethods()
         }
         setFields()
@@ -388,10 +408,10 @@ class OkReflect {
     }
 
     /**
-     * If there is no constructor parameters, there will throw an exception
+     * If there is no constructor parameters for the , there will throw an exception
      */
     private fun verifyConstructorArgs() {
-        if (constructorArgs == null) {
+        if (!withOuterInstance && constructorArgs == null) {
             throw NullPointerException(
                 "you have to call create() method, or else you will get nothing."
             )
@@ -402,7 +422,7 @@ class OkReflect {
      * If there is no class info, there will throw an exception
      */
     private fun verifyClassInfo() {
-        if (clazz == null && className == null && className!!.isEmpty()) {
+        if (!withOuterInstance && clazz == null && className == null && className!!.isEmpty()) {
             throw java.lang.NullPointerException(
                 "you must specify the className or class."
             )
@@ -487,6 +507,16 @@ class OkReflect {
         @JvmStatic
         fun on(clazz: Class<String>): OkReflect {
             return OkReflect(clazz)
+        }
+
+        /**
+         * @param instance: The instance that you want to use.
+         *
+         * Set the instance for methods that you want to call.
+         */
+        @JvmStatic
+        fun on(instance: Any): OkReflect {
+            return OkReflect(instance)
         }
 
         /**

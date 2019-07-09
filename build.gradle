@@ -11,7 +11,7 @@ plugins {
 apply plugin: 'maven'
 
 group 'com.github.zeshaoaaa'
-version '0.0.9'
+version '0.1.0'
 
 sourceCompatibility = 1.8
 

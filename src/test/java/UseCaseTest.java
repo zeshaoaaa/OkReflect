@@ -1,6 +1,7 @@
 import okreflect.OkReflect;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -177,13 +178,6 @@ public class UseCaseTest {
         assert finalField.equals("changed");
     }
 
-    @Test
-    public void testSetFinalFieldOfClass() {
-        String finalField = OkReflect.on("TestClass")
-                .set("finalString", "changed")
-                .get("finalString");
-        assert finalField.equals("changed");
-    }
 
     @Test
     public void testGetClass() {
@@ -206,6 +200,33 @@ public class UseCaseTest {
         String finalField = OkReflect.on("TestClass")
                 .set("staticFinalField", "changed")
                 .get("staticFinalField");
+        assert finalField.equals("changed");
+    }
+
+    @Test
+    public void testCallMethodFromOuterInstance() {
+        TestClass testClass = new TestClass();
+        String name = OkReflect.on(testClass)
+                .call("getName")
+                .get();
+        assert name.equals("default");
+    }
+
+    @Test
+    public void testSetFieldFromOuterInstance() {
+        TestClass testClass = new TestClass();
+        String name = OkReflect.on(testClass)
+                .set("name", "Alex")
+                .get("name");
+        assert name.equals("Alex");
+    }
+
+    @Ignore
+    @Test
+    public void testSetFinalFieldOfClass() {
+        String finalField = OkReflect.on("TestClass")
+                .set("finalString", "changed")
+                .get("finalString");
         assert finalField.equals("changed");
     }
 
