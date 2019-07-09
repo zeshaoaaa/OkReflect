@@ -61,6 +61,6 @@ uploadArchives {
         // 项目名称
         pom.artifactId = "OkReflect"
         // 版本号
-        pom.version = "0.0.6"
+        pom.version = "0.1.3"
     }
 }

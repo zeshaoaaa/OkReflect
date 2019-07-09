@@ -7,6 +7,7 @@ public class TestClass extends SuperTestClass {
     private static final String staticFinalField = "finalString";
     private final String nickname = "666";
     private byte b;
+    private Byte b2;
     public char c = 'a';
     private static int i = 10;
     private Integer i2 = 12;
@@ -25,6 +26,10 @@ public class TestClass extends SuperTestClass {
         this.age = age;
     }
 
+    private void setName(String name) {
+        this.name = name;
+    }
+
     private String getName() {
         return name;
     }
@@ -40,6 +45,11 @@ public class TestClass extends SuperTestClass {
     private void setData(String name, byte b) {
         this.name = name;
         this.b = b;
+    }
+
+    private void setData2(String name, Byte b) {
+        this.name = name;
+        this.b2 = b;
     }
 
 }

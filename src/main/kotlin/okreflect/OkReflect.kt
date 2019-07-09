@@ -77,6 +77,11 @@ class OkReflect {
     private var withOuterInstance = false
 
     /**
+     * The class of parameters in the method.
+     */
+    private var parameterTypes: Array<Class<*>>? = null
+
+    /**
      * @param className: The name of the class that you want to create.
      *
      * Constructor of OkReflect.
@@ -154,12 +159,21 @@ class OkReflect {
     }
 
     /**
-     * @param methodName: the name of the method that you want to call.
+     * @param methodName: The name of the method that you want to call.
+     * @param classes: The class of the parameters.
      * @param args: The parameters of the method that you wan to call.
      *
      * Call the method that you want to call.
      * The method will be called when [get] method called.
      * The method will be call with the instance.
+     */
+    fun call(methodName: String, classes: Array<Class<*>>, vararg args: Any): OkReflect {
+        parameterTypes = classes
+        return realCall(methodName, true, *args)
+    }
+
+    /**
+     * @See [call]
      */
     fun call(methodName: String, vararg args: Any): OkReflect {
         return realCall(methodName, true, *args)
@@ -202,6 +216,7 @@ class OkReflect {
      * you need to pass the instance in this method.
      */
     fun with(instance: Any): OkReflect {
+        withOuterInstance = true
         this.instance = instance
         return this
     }
@@ -217,6 +232,7 @@ class OkReflect {
         setFieldMap!![fieldName] = arg
         return this
     }
+
 
     /**
      * @param fieldName: The name of the field.
@@ -241,7 +257,7 @@ class OkReflect {
      */
     private fun setFieldOfInstance(fieldName: String, arg: Any) {
         val osName = System.getProperty("os.name")
-        var field = instance!!.javaClass.getDeclaredField(fieldName)
+        var field = clazz!!.getDeclaredField(fieldName)
         field = accessible(field)
         if (osName != "Linux") {
             removeFinalModifier(field)
@@ -263,14 +279,12 @@ class OkReflect {
      */
     private fun invoke(methodCall: MethodCall) {
         val args = methodCall.args
-        val methods = instance!!.javaClass.methods
-        val method = getMethod(clazz, methodCall.methodName, args)
-        val withInstance = methodCall.callWithInstance
+        val method = getMethod(clazz, methodCall.methodName, args, parameterTypes)
         val returnType = method!!.returnType.toString()
         if (returnType == "void") {
             method.invoke(instance, *args)
         } else {
-            result = if (withInstance) {
+            result = if (methodCall.callWithInstance) {
                 method.invoke(instance, *args)
             } else {
                 verifyResult()
@@ -377,22 +391,29 @@ class OkReflect {
     }
 
     /**
-     * Get the result value from last method if it has a return value,
-     * or else you will get the instance.
-     */
-    fun <T> get(): T? {
-        return getByFlag(RETURN_FLAG_RESULT)
-    }
-
-    /**
      * @param fieldName: The name of the field that you want to get.
      *
-     * Get the result value from last method if it has a return value,
-     * or else you will get the instance.
+     * Get instance when return value from last method is null.
      */
     fun <T> get(fieldName: String): T? {
         targetFieldName = fieldName
         return getByFlag<T>(RETURN_FLAG_FIELD)
+    }
+
+    /**
+     * @see [get]
+     */
+    fun <T> get(): T? {
+        return getByFlag(RETURN_FLAG_RESULT_OR_INSTANCE)
+    }
+
+    /**
+     * OkReflect will return instance when the result is null,
+     * when you trying to get return value no matter result is null,
+     * then you can use this method.
+     */
+    fun <T> getResult():T? {
+        return getByFlag(RETURN_FLAG_RESULT)
     }
 
     /**
@@ -427,14 +448,11 @@ class OkReflect {
      */
     private fun <T> realGet(returnFlag: Int): T? {
         if (!withOuterInstance) {
-            val needInstance = returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT
-            if (needInstance) {
+            if (needInstance(returnFlag)) {
                 verifyClassInfo()
                 verifyConstructorArgs()
             }
-            if (clazz == null) {
-                this.clazz = Class.forName(className!!)
-            }
+            initClazz()
             if (createCalled) {
                 initInstance()
                 invokeMethods()
@@ -445,6 +463,16 @@ class OkReflect {
         setFields()
         initFieldValue()
         return getByResult<T>(returnFlag)
+    }
+
+    private fun initClazz() {
+        if (clazz == null) {
+            this.clazz = Class.forName(className!!)
+        }
+    }
+
+    private fun needInstance(returnFlag: Int): Boolean {
+        return returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT_OR_INSTANCE
     }
 
     /**
@@ -495,7 +523,8 @@ class OkReflect {
                 RETURN_FLAG_FIELD -> {
                     targetFieldValue as T
                 }
-                RETURN_FLAG_RESULT -> {
+                RETURN_FLAG_RESULT -> result as T
+                RETURN_FLAG_RESULT_OR_INSTANCE -> {
                     if (result != null) {
                         result as T
                     } else {
@@ -526,12 +555,17 @@ class OkReflect {
         /**
          * Return the return value from the method that you invoked.
          */
-        private const val RETURN_FLAG_RESULT = 3
+        private const val RETURN_FLAG_RESULT_OR_INSTANCE = 3
 
         /**
          * Return the field.
          */
         private const val RETURN_FLAG_FIELD = 4
+
+        /**
+         * Return the return value from the invoked method.
+         */
+        private const val RETURN_FLAG_RESULT = 5
 
         /**
          * Set the class name of the instance/

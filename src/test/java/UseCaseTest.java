@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 
@@ -234,7 +235,24 @@ public class UseCaseTest {
         assert name.equals("Tom");
     }
 
+    @Test
+    public void testCallMethodWithVoidParameter() {
+        TestClass testClass = new TestClass();
+        Class classes[] = {String.class, Byte.class};
+        String name = OkReflect.on(testClass)
+                .call("setData2", classes, "Tom", null)
+                .get("name");
+        assert name.equals("Tom");
+    }
 
+    @Test
+    public void testGetResult() {
+        TestClass testClass = new TestClass();
+        String name = OkReflect.on(testClass)
+                .call("getName")
+                .getResult();
+        assert name.equals("default");
+    }
 
     @Ignore
     @Test
@@ -245,5 +263,10 @@ public class UseCaseTest {
         assert finalField.equals("changed");
     }
 
+    // Fix Bug 'set field of instance failed, when class is super class',
+    // Fix Bug 'get class of parameter failed, when parameter is null'
+    // Added getResult() method for the purpose of obtain the return value no matter it is null or not.
+    // Added classes parameter to call() and simpleCall() methods for the purpose of
+    // passing void parameter into the method.
 
 }
