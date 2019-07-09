@@ -90,7 +90,7 @@ class OkReflect {
      *
      * Constructor of OkReflect.
      */
-    constructor(clazz: Class<String>) {
+    constructor(clazz: Class<*>) {
         this.clazz = clazz
     }
 
@@ -253,6 +253,7 @@ class OkReflect {
      */
     private fun invoke(methodCall: MethodCall) {
         val args = methodCall.args
+        val methods = instance!!.javaClass.methods
         val method = getMethod(clazz, methodCall.methodName, args)
         val withInstance = methodCall.callWithInstance
         val returnType = method!!.returnType.toString()
@@ -287,7 +288,7 @@ class OkReflect {
         targetFieldValue = if (targetFieldName != null) {
             if (instance == null) {
                 val field = clazz!!.getDeclaredField(targetFieldName)
-                accessible(field)[instance]
+                accessible(field).get(instance)
             } else {
                 val field = instance!!.javaClass.getDeclaredField(targetFieldName)
                 accessible(field).get(instance)
@@ -505,7 +506,7 @@ class OkReflect {
          * Set the class object of the instance.
          */
         @JvmStatic
-        fun on(clazz: Class<String>): OkReflect {
+        fun on(clazz: Class<*>): OkReflect {
             return OkReflect(clazz)
         }
 

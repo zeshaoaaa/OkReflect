@@ -26,6 +26,13 @@ String str = OkReflect
                 .call("substring", 6)
                 .get();
 
+// Invoke methods and set fields with outer instance.
+String instance = "666";
+String str = OkReflect
+                .on(instance)
+                .call("substring", 2)
+                .get();
+
 // Invoke method with return value of last method.
 String str = OkReflect
                 .on(String.class)
@@ -159,7 +166,7 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:0.0.9'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.1.0'
 }
 ```
 ### Maven
@@ -175,6 +182,6 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.zeshaoaaa</groupId>
 	    <artifactId>OkReflect</artifactId>
-	    <version>0.0.9</version>
+	    <version>0.1.0</version>
 	</dependency>
 ```

@@ -8,7 +8,7 @@ public class TestClass {
     private byte b;
     public char c = 'a';
     private static int i = 10;
-    private  Integer i2 = 12;
+    private Integer i2 = 12;
 
     public TestClass() {
 
@@ -33,6 +33,11 @@ public class TestClass {
 
     private byte getByte() {
         return b;
+    }
+
+    private void setData(String name, byte b) {
+        this.name = name;
+        this.b = b;
     }
 
 }

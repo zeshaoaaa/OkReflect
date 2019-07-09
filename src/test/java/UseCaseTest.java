@@ -208,7 +208,7 @@ public class UseCaseTest {
         TestClass testClass = new TestClass();
         String name = OkReflect.on(testClass)
                 .call("getName")
-                .get();
+                .get("name");
         assert name.equals("default");
     }
 
@@ -219,6 +219,41 @@ public class UseCaseTest {
                 .set("name", "Alex")
                 .get("name");
         assert name.equals("Alex");
+    }
+
+    @Test
+    public void testOriginCallMethodWithMultipleParameter() {
+        byte b = 1;
+        Object[] p = {"Tom", b};
+        Field finalField = null;
+        try {
+            TestClass testClass = new TestClass();
+            Class clazz = testClass.getClass();
+            Class classArray[] = {String.class, byte.class};
+            Method method = clazz.getDeclaredMethod("setData", classArray);
+            finalField = clazz.getDeclaredField("finalString");
+            finalField.setAccessible(true);
+            finalField.set(testClass, "changed");
+            String result = (String) finalField.get(testClass);
+            assert result.equals("changed");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testCallMethodWithMultipleParameter() {
+        byte b = 1;
+        Object[] p = {"Tom", b};
+        String name = OkReflect.on(TestClass.class)
+                .create()
+                .call("setData", p)
+                .get();
+        assert name.equals("Tom");
     }
 
     @Ignore
