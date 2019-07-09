@@ -1,17 +1,24 @@
-import com.sun.source.tree.AssertTree
 import okreflect.OkReflect
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import java.lang.NullPointerException
-import java.lang.reflect.Field
-import kotlin.math.exp
 
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+
+
+/**
+ * This test class responsible for test all the use case.
+ */
 class KotlinUseCaseTest {
 
-    // Test whether OkReflect can create instance with constructor that have parameter.
+    internal var expectedException = ExpectedException.none()
+
     @Test
-    fun testCreateInstanceFromClassNameWithConstructorThatHaveParameter() {
+    fun testCreateClassWithClassName() {
         val str = OkReflect.on("java.lang.String")
             .create("test")
             .get<String>()
@@ -19,7 +26,7 @@ class KotlinUseCaseTest {
     }
 
     @Test
-    fun testCreateInstanceFromClass() {
+    fun testCreateInstanceByClass() {
         val str = OkReflect.on(String::class.java)
             .create("test")
             .get<String>()
@@ -27,15 +34,21 @@ class KotlinUseCaseTest {
     }
 
     @Test
+    fun testGetFieldFromSuperClass() {
+        val testClass = TestClass("Alex")
+        val superName = OkReflect.on(SuperTestClass::class.java)
+            .with(testClass)
+            .get<String>("superName")
+        assert(superName == "Alex")
+    }
+
+    @Test
     fun testCreateInstanceByPrivateConstructor() {
         val name = OkReflect.on("TestClass")
             .create("Tom", 11)
             .get<String>("name")
-
         Assert.assertTrue(name == "Tom")
     }
-
-    private var expectedException = ExpectedException.none()
 
     @Test(expected = NullPointerException::class)
     fun testNotCallCreateException() {
@@ -55,6 +68,7 @@ class KotlinUseCaseTest {
         Assert.assertEquals(str, "world")
     }
 
+    // 6. Invoke method with return value of last method
     @Test
     fun testCallWithResult() {
         val str = OkReflect
@@ -80,11 +94,9 @@ class KotlinUseCaseTest {
     fun testNotCallCreateErrorCallback() {
         val str = OkReflect
             .on("java.lang.String")
-            .error(object : OkReflect.OkReflectErrorCallback {
-                override fun onError(e: Exception) {
-                    Assert.assertTrue(e.toString().contains("you have to call create()"))
-                }
-            })
+            .error {
+                assert(it.toString().contains("you have to call create()"))
+            }
             .get<String>()
     }
 
@@ -133,45 +145,25 @@ class KotlinUseCaseTest {
     fun testStringToJavaFile() {
     }
 
+
+    // 8. Get and set field value of instance
     @Test
     fun testSetAndGetStaticField() {
         val i = OkReflect.on("TestClass")
             .set("i", 6)
             .get<Int>("i")!!
         assert(i == 6)
-        println("")
     }
 
     @Test
-    fun testOriginalSetFinalField() {
-        /*String finalField = OkReflect.on("TestClass")
-                .set("finalString", "changed")
-                .getField("finalString");*/
-        var finalField: Field? = null
-        try {
-            val testClass = TestClass()
-            val clazz = testClass.javaClass
-            finalField = clazz.getDeclaredField("finalString")
-            finalField!!.isAccessible = true
-            finalField.set(testClass, "changed")
-            val result = finalField.get(testClass) as String
-            assert(result == "changed")
-        } catch (e: NoSuchFieldException) {
-            e.printStackTrace()
-        } catch (e: IllegalAccessException) {
-            e.printStackTrace()
-        }
-
-    }
-
-    @Test
-    fun testSetFinalFieldByOkReflect() {
+    fun testSetFinalFieldOfInstance() {
         val finalField = OkReflect.on("TestClass")
             .create()
             .set("finalString", "changed")
             .get<String>("finalString")
         assert(finalField == "changed")
     }
+
 
     @Test
     fun testGetClass() {
@@ -181,9 +173,65 @@ class KotlinUseCaseTest {
     }
 
     @Test
-    fun testSetStaticFinalField() {
+    fun testSetStaticField() {
+        val finalField = OkReflect.on("TestClass")
+            .set("staticString", "changed")
+            .get<String>("staticString")
+        assert(finalField == "changed")
+    }
+
+    @Test
+    fun testSetStaticFinalFieldOfInstance() {
         val finalField = OkReflect.on("TestClass")
             .create()
+            .set("staticFinalField", "changed")
+            .get<String>("staticFinalField")
+        assert(finalField == "changed")
+    }
+
+    @Test
+    fun testSetStaticFinalFieldOfClass() {
+        val finalField = OkReflect.on("TestClass")
+            .set("staticFinalField", "changed")
+            .get<String>("staticFinalField")
+        assert(finalField == "changed")
+    }
+
+    // 5. Invoke methods and set fields with instance that created outside of OkReflect
+    @Test
+    fun testCallMethodFromOuterInstance() {
+        val testClass = TestClass()
+        val name = OkReflect.on(testClass)
+            .call("getName")
+            .get<String>("name")
+        assert(name == "default")
+    }
+
+    @Test
+    fun testSetFieldFromOuterInstance() {
+        val testClass = TestClass()
+        val name = OkReflect.on(testClass)
+            .set("name", "Alex")
+            .get<String>("name")
+        assert(name == "Alex")
+    }
+
+    @Test
+    fun testCallMethodWithMultipleParameter() {
+        val b: Byte = 1
+        val p = arrayOf<Any>("Tom", b)
+        val name = OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setData", *p)
+            .get<String>("name")
+        assert(name == "Tom")
+    }
+
+
+    @Ignore
+    @Test
+    fun testSetFinalFieldOfClass() {
+        val finalField = OkReflect.on("TestClass")
             .set("staticFinalField", "changed")
             .get<String>("staticFinalField")
         assert(finalField == "changed")

@@ -196,6 +196,17 @@ class OkReflect {
     }
 
     /**
+     * @param instance: The instance that you want to get field value for.
+     *
+     * When you want to get or set field of super class from a specific instance,
+     * you need to pass the instance in this method.
+     */
+    fun with(instance: Any): OkReflect {
+        this.instance = instance
+        return this
+    }
+
+    /**
      * @param fieldName: The name of the field that you want to set.
      * @param arg: The value of the field that you want to set.
      */
@@ -214,7 +225,6 @@ class OkReflect {
     private fun setField(fieldName: String, arg: Any) {
         if (instance != null) {
             setFieldOfInstance(fieldName, arg)
-
         } else {
             var field = clazz!!.getDeclaredField(fieldName)
             field = accessible(field)
@@ -286,15 +296,44 @@ class OkReflect {
      */
     private fun initFieldValue() {
         targetFieldValue = if (targetFieldName != null) {
-            if (instance == null) {
-                val field = clazz!!.getDeclaredField(targetFieldName)
-                accessible(field).get(instance)
-            } else {
-                val field = instance!!.javaClass.getDeclaredField(targetFieldName)
-                accessible(field).get(instance)
+            var exception: Throwable? = null
+            var value = try {
+                initFieldValueFromDeclaredField()
+            } catch (e: java.lang.Exception) {
+                exception = e
+                null
             }
+            if (value == null) {
+                value = try {
+                    initFieldValueFromField()
+                } catch (e: java.lang.Exception) {
+                    exception = e
+                    null
+                }
+            }
+            value ?: throw exception!!
         } else {
             null
+        }
+    }
+
+    private fun initFieldValueFromDeclaredField(): Any? {
+        return if (instance == null) {
+            val field = clazz!!.getDeclaredField(targetFieldName)
+            accessible(field).get(null)
+        } else {
+            val field = clazz!!.getDeclaredField(targetFieldName)
+            accessible(field).get(instance)
+        }
+    }
+
+    private fun initFieldValueFromField(): Any? {
+        return if (instance == null) {
+            val field = clazz!!.getField(targetFieldName)
+            accessible(field).get(null)
+        } else {
+            val field = clazz!!.getField(targetFieldName)
+            accessible(field).get(instance)
         }
     }
 
@@ -412,7 +451,7 @@ class OkReflect {
      * If there is no constructor parameters for the , there will throw an exception
      */
     private fun verifyConstructorArgs() {
-        if (!withOuterInstance && constructorArgs == null) {
+        if (constructorArgs == null) {
             throw NullPointerException(
                 "you have to call create() method, or else you will get nothing."
             )
@@ -423,7 +462,7 @@ class OkReflect {
      * If there is no class info, there will throw an exception
      */
     private fun verifyClassInfo() {
-        if (!withOuterInstance && clazz == null && className == null && className!!.isEmpty()) {
+        if (clazz == null && className == null && className!!.isEmpty()) {
             throw java.lang.NullPointerException(
                 "you must specify the className or class."
             )

@@ -6,150 +6,237 @@
 OkReflect is a library that trying to help you use Java Reflect feature with ease.
 
 ## Usage
-### Java
+
+### 1. Create instance with class name
 
 ```java
-// Create instance with name of the class
+// Java
 String str = OkReflect.on("java.lang.String")
                 .create("Hello OkReflect")
                 .get();
+```
 
-// Create instance by class
+```kotlin
+// Kotlin
+val str: String? = OkReflect.on("java.lang.String")
+            .create("test")
+            .get()
+```
+
+
+
+### 2. Create instance by class
+
+```java
+// Java
 String str = OkReflect.on(String.class)
                 .create("test")
                 .get();
+```
 
-// Invoke method with instance
+```kotlin
+// Kotlin
+val str: String? = OkReflect.on(String::class.java)
+            .create("test")
+            .get()
+```
+
+
+
+### 3. Get the field value from the super class
+
+```java
+// Java
+TestClass testClass = new TestClass("Alex");
+String superName = OkReflect.on(SuperTestClass.class)
+  									.with(testClass)
+  									.get("superName");
+```
+
+```kotlin
+// Kotlin
+val testClass = TestClass("Alex")
+val superName = OkReflect.on(SuperTestClass::class.java)
+            .with(testClass)
+            .get<String>("superName")
+```
+
+
+
+### 4. Invoke the method
+
+```java
+// Java
 String str = OkReflect
                 .on(String.class)
                 .create("Hello world")
                 .call("substring", 6)
                 .get();
+```
 
-// Invoke methods and set fields with outer instance.
-String instance = "666";
-String str = OkReflect
-                .on(instance)
-                .call("substring", 2)
-                .get();
+```kotlin
+// Kotlin
+val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)     
+            .get<String?>()
+```
 
-// Invoke method with return value of last method.
+
+
+### 5. Invoke methods and set fields with instance that created outside of OkReflect
+
+```java
+// Java
+TestClass testClass = new TestClass();
+String name = OkReflect.on(testClass)
+                .set("name", "Alex")
+                .get("name");
+```
+
+```kotlin
+// Kotlin
+val testClass = TestClass()
+val name = OkReflect.on(testClass)
+            .call("getName")
+            .get<String>("name")
+```
+
+
+
+### 6. Invoke method with return value of last method
+
+```java
+// Java
 String str = OkReflect
                 .on(String.class)
                 .create("Hello world")
                 .call("substring", 6)
                 .callWithResult("substring", 4)
                 .get();
+```
 
-// Get the instance after invoke the method
- String str = OkReflect
+```kotlin
+// Kotlin
+val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)
+            .callWithResult("substring", 4)
+            .get<String?>()
+```
+
+
+
+### 7. Get the instance after invoke the method
+
+```java
+// Java
+String str = OkReflect
                 .on(String.class)
                 .create("Hello world")
                 .call("substring", 6)
                 .getInstance();
+```
 
-// Get and set field value
-char[] value = OkReflect.on("java.lang.String")
-                .create()
-                .set("value", "Alex".toCharArray())
-                .getField("value");
+```kotlin
+// Kotlin
+val str = OkReflect
+            .on(String::class.java)
+            .create("Hello world")
+            .call("substring", 6)
+            .getInstance<String>()
+```
 
-// Get and set static field value
-int staticField = OkReflect.on("TestClass")
-                .set("staticField", 6)
-                .getField("staticField");
 
-// Handle the exception with callback
+
+### 8. Get and set field value of instance
+
+```java
+// Java
+int i = OkReflect.on("TestClass")
+                .set("i", 6)
+                .get("i");
+```
+
+```kotlin
+// Kotlin
+val i = OkReflect.on("TestClass")
+            .set("i", 6)
+            .get<Int?>("i")
+```
+
+
+
+### 9. Get and set static field value of the class
+
+```java
+// Java
+String finalField = OkReflect.on("TestClass")
+                .set("staticString", "changed")
+                .get("staticString");
+```
+
+``` kotlin
+// Kotlin
+val finalField = OkReflect.on("TestClass")
+            .set("staticString", "changed")
+            .get<String?>("staticString")
+```
+
+
+
+### 10. Handle the exception with callback
+
+```java
+// Java
 String str = OkReflect
                 .on("java.lang.String")
-                .create("Hello world")
-                .call("hhh")
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        // handle the exception
+                        assert e.toString().contains("you have to call create()");
                     }
                 })
                 .get();
+```
 
+```kotlin
+// Kotlin
+val str = OkReflect
+            .on("java.lang.String")
+            .error {
+                assert(it.toString().contains("you have to call create()"))
+            }
+            .get<String>()
+```
+
+
+
+### 11. Use dynamic proxy
+
+```Java
 // First step of using dynamic proxy: declare the interface
 public interface StringProxy {
   String substring(int beginIndex);
 }
+```
 
-// Second step of using dynamic proxy: use
+``` Java
+// Java
 String substring = OkReflect.on("java.lang.String")
                 .create("Hello World")
                 .use(StringProxy.class)
                 .substring(6);
 ```
 
-### Kotlin
-
 ```kotlin
-// Create instance
-val str: String? = OkReflect.on("java.lang.String")
-            .create("test")
-            .get()
-
-// Create instance by class
-val str: String? = OkReflect.on(String::class.java)
-            .create("test")
-            .get()
-
-// Invoke method with instance
-val str = OkReflect
-            .on(String::class.java)
-            .create("Hello world")
-            .call("substring", 6)     
-            .get<String>()
-
-// Invoke method with return value from last method
-val str = OkReflect
-						.on(String::class.java)
-            .create("Hello world")
-            .call("substring", 6)            
-            .callWithResult("substring", 4)  
-            .get<String>()
-
-// Handle the exception with function
-val str = OkReflect
-            .on("java.lang.String")
-            .error{
-                // handle exception
-            }
-            .get<String>()
-
-// Handle the exception with callback
-val str = OkReflect
-            .on("java.lang.String")
-            .error(object : OkReflect.OkReflectErrorCallback {
-                override fun onError(e: Exception) {
-                    // handle exception
-                }
-            })
-            .get<String>()
-
-// Get and set field value
-long serialVersionUID = OkReflect.on("java.lang.String")
-                .get("serialVersionUID");
-
-// Get and set static field value
-val staticField: Int? = OkReflect.on("TestClass")
-            .set("staticField", 6)
-            .get("staticField")
-
-// First step of using dynamic proxy: declare the interface
-interface StringProxy {
-  fun substring(beginIndex: Int): String
-}
-
-// Second step of using dynamic proxy: use
+// Kotlin
 val substring = OkReflect.on("java.lang.String")
             .create("Hello World")
             .use(StringProxy::class.java)
             .substring(6)
-
 ```
 
 ### 
@@ -166,7 +253,7 @@ allprojects {
 ```
 ```groovy
 dependencies {
-    implementation 'com.github.zeshaoaaa:OkReflect:0.1.0'
+    implementation 'com.github.zeshaoaaa:OkReflect:0.1.1'
 }
 ```
 ### Maven
@@ -182,6 +269,6 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.zeshaoaaa</groupId>
 	    <artifactId>OkReflect</artifactId>
-	    <version>0.1.0</version>
+	    <version>0.1.1</version>
 	</dependency>
 ```

@@ -11,7 +11,7 @@ plugins {
 apply plugin: 'maven'
 
 group 'com.github.zeshaoaaa'
-version '0.0.9'
+version '0.1.1'
 
 sourceCompatibility = 1.8
 
@@ -61,6 +61,6 @@ uploadArchives {
         // 项目名称
         pom.artifactId = "OkReflect"
         // 版本号
-        pom.version = "0.0.5"
+        pom.version = "0.0.6"
     }
 }

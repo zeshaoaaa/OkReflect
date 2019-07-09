@@ -16,9 +16,8 @@ import java.lang.reflect.Method;
  */
 public class UseCaseTest {
 
-    // Test whether OkReflect can create instance with constructor that have parameter.
     @Test
-    public void testCreateInstanceFromClassNameWithConstructorThatHaveParameter() {
+    public void testCreateClassWithClassName() {
         String str = OkReflect.on("java.lang.String")
                 .create("test")
                 .get();
@@ -26,7 +25,7 @@ public class UseCaseTest {
     }
 
     @Test
-    public void testCreateInstanceFromClass() {
+    public void testCreateInstanceByClass() {
         String str = OkReflect.on(String.class)
                 .create("test")
                 .get();
@@ -34,11 +33,19 @@ public class UseCaseTest {
     }
 
     @Test
+    public void testGetFieldFromSuperClass() {
+        TestClass testClass = new TestClass("Alex");
+        String superName = OkReflect.on(SuperTestClass.class)
+                .with(testClass)
+                .get("superName");
+        assert superName.equals("Alex");
+    }
+
+    @Test
     public void testCreateInstanceByPrivateConstructor() {
         String name = OkReflect.on("TestClass")
                 .create("Tom", 11)
                 .get("name");
-
         Assert.assertTrue(name.equals("Tom"));
     }
 
@@ -62,6 +69,7 @@ public class UseCaseTest {
         Assert.assertEquals(str, "world");
     }
 
+    // 6. Invoke method with return value of last method
     @Test
     public void testCallWithResult() {
         String str = OkReflect
@@ -83,6 +91,7 @@ public class UseCaseTest {
         Assert.assertEquals(str, "Hello world");
     }
 
+    // 10. Handle the exception with callback
     @Test
     public void testNotCallCreateErrorCallback() {
         String str = OkReflect
@@ -90,7 +99,7 @@ public class UseCaseTest {
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        Assert.assertTrue(e.toString().contains("you have to call create()"));
+                        assert e.toString().contains("you have to call create()");
                     }
                 })
                 .get();
@@ -142,31 +151,14 @@ public class UseCaseTest {
     public void testStringToJavaFile() {
     }
 
+
+    // 8. Get and set field value of instance
     @Test
     public void testSetAndGetStaticField() {
         int i = OkReflect.on("TestClass")
                 .set("i", 6)
                 .get("i");
         assert i == 6;
-        System.out.println("");
-    }
-
-    @Test
-    public void testOriginalSetFinalField() {
-        Field finalField = null;
-        try {
-            TestClass testClass = new TestClass();
-            Class clazz = testClass.getClass();
-            finalField = clazz.getDeclaredField("finalString");
-            finalField.setAccessible(true);
-            finalField.set(testClass, "changed");
-            String result = (String) finalField.get(testClass);
-            assert result.equals("changed");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
@@ -186,6 +178,15 @@ public class UseCaseTest {
         assert clazz.equals(TestClass.class);
     }
 
+    // 9. Get and set static field value of the class
+    @Test
+    public void testSetStaticField() {
+        String finalField = OkReflect.on("TestClass")
+                .set("staticString", "changed")
+                .get("staticString");
+        assert finalField.equals("changed");
+    }
+
     @Test
     public void testSetStaticFinalFieldOfInstance() {
         String finalField = OkReflect.on("TestClass")
@@ -203,6 +204,7 @@ public class UseCaseTest {
         assert finalField.equals("changed");
     }
 
+    // 5. Invoke methods and set fields with instance that created outside of OkReflect
     @Test
     public void testCallMethodFromOuterInstance() {
         TestClass testClass = new TestClass();
@@ -222,46 +224,24 @@ public class UseCaseTest {
     }
 
     @Test
-    public void testOriginCallMethodWithMultipleParameter() {
-        byte b = 1;
-        Object[] p = {"Tom", b};
-        Field finalField = null;
-        try {
-            TestClass testClass = new TestClass();
-            Class clazz = testClass.getClass();
-            Class classArray[] = {String.class, byte.class};
-            Method method = clazz.getDeclaredMethod("setData", classArray);
-            finalField = clazz.getDeclaredField("finalString");
-            finalField.setAccessible(true);
-            finalField.set(testClass, "changed");
-            String result = (String) finalField.get(testClass);
-            assert result.equals("changed");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
     public void testCallMethodWithMultipleParameter() {
         byte b = 1;
         Object[] p = {"Tom", b};
         String name = OkReflect.on(TestClass.class)
                 .create()
                 .call("setData", p)
-                .get();
+                .get("name");
         assert name.equals("Tom");
     }
+
+
 
     @Ignore
     @Test
     public void testSetFinalFieldOfClass() {
         String finalField = OkReflect.on("TestClass")
-                .set("finalString", "changed")
-                .get("finalString");
+                .set("staticFinalField", "changed")
+                .get("staticFinalField");
         assert finalField.equals("changed");
     }
 

@@ -1,7 +1,8 @@
-public class TestClass {
+public class TestClass extends SuperTestClass {
 
     private int age;
     private String name = "default";
+    private static String staticString = "staticString";
     private final String finalString = "finalString";
     private static final String staticFinalField = "finalString";
     private final String nickname = "666";
@@ -15,6 +16,7 @@ public class TestClass {
     }
 
     public TestClass(String name) {
+        super(name);
         this.name = name;
     }
 
