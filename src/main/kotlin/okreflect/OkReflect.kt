@@ -174,7 +174,7 @@ class OkReflect {
      * The method will be called when [get] method called.
      * The method will be call with the instance.
      */
-    fun call(methodName: String, classes: Array<Class<*>>?, vararg args: Any): OkReflect {
+    fun callWithClass(methodName: String, classes: Array<Class<*>>?, vararg args: Any?): OkReflect {
         return realCall(true,methodName, classes, *args)
     }
 
@@ -182,7 +182,7 @@ class OkReflect {
      * @See [call]
      */
     fun call(methodName: String, vararg args: Any): OkReflect {
-        return call(methodName, null, *args)
+        return callWithClass(methodName, null, *args)
     }
 
     /**
@@ -228,7 +228,7 @@ class OkReflect {
         callWithInstance: Boolean = true,
         methodName: String,
         classes: Array<Class<*>>?,
-        vararg args: Any
+        vararg args: Any?
     ): OkReflect {
         if (methodCallList == null) {
             methodCallList = ArrayList()

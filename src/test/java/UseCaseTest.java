@@ -241,7 +241,7 @@ public class UseCaseTest {
         Object args[] = {"Tom", null};
         String name = OkReflect.on(TestClass.class)
                 .create()
-                .call("setData2", classes, args)
+                .callWithClass("setData2", classes, args)
                 .get("name");
         assert name.equals("Tom");
     }
@@ -254,8 +254,8 @@ public class UseCaseTest {
         Object args2[] = {"Bingo", null};
         TestClass instance = OkReflect.on(TestClass.class)
                 .create()
-                .call("setData2", classes1, args1)
-                .call("setData3", classes2, args2)
+                .callWithClass("setData2", classes1, args1)
+                .callWithClass("setData3", classes2, args2)
                 .get();
 
         String name = OkReflect.on(instance)

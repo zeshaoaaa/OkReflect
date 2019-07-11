@@ -4,6 +4,8 @@
 
 OkReflect 是一个封装了 Java 反射操作的工具。
 
+[OkReflect 介绍](https://www.jianshu.com/p/7ffc22eee6cc)
+
 ## 用法
 
 ### 1. 使用类名创建类
@@ -211,9 +213,38 @@ val str = OkReflect
             .get<String>()
 ```
 
-### 11. 只修改字段或调用方法
+
+
+### 11. 调用方法并传入实参类型信息
 
 ```java
+// Java
+Class classes[] = {String.class, Byte.class};
+Object args[] = {"Tom", null};
+String name = OkReflect.on(TestClass.class)
+                .create()
+                .callWithClass("setData2", classes, args)
+                .get("name");
+```
+
+```kotlin
+// Kotlin
+val classes = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
+val args = arrayOf<Any?>("Tom", null)
+val name = OkReflect.on(TestClass::class.java)
+            .create()
+            .callWithClass("setData2", classes, *args)
+            .get<String?>("name")
+```
+
+
+
+
+
+### 12. 纯设置字段或调用方法
+
+```java
+// Java
 TestClass testClass = new TestClass();
 String nameFromeMethod = OkReflect.on(testClass)
                 .simpleCall("getName");
@@ -222,8 +253,21 @@ String name = OkReflect.on(testClass)
                 .simpleSet("name", "Tom");
 ```
 
+```kotlin
+// Kotlin
+val testClass = TestClass()
+val nameFromMethod = OkReflect.on(testClass)
+            .simpleCall<String>("getName")
 
-### 12. 动态代理
+val name = OkReflect.on(testClass)
+            .simpleSet<String>("name", "Tom")
+```
+
+
+
+
+
+### 13. 动态代理
 
 ```Java
 // First step of using dynamic proxy: declare the interface

@@ -6,7 +6,6 @@ import org.junit.rules.ExpectedException
 
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 
@@ -14,8 +13,6 @@ import java.lang.reflect.Method
  * This test class responsible for test all the use case.
  */
 class KotlinUseCaseTest {
-
-    internal var expectedException = ExpectedException.none()
 
     @Test
     fun testCreateClassWithClassName() {
@@ -34,12 +31,13 @@ class KotlinUseCaseTest {
     }
 
     @Test
-    fun testGetFieldFromSuperClass() {
-        val testClass = TestClass("Alex")
+    fun testSetAndGetFieldFromSuperClass() {
+        val testClass = TestClass()
         val superName = OkReflect.on(SuperTestClass::class.java)
             .with(testClass)
+            .set("superName", "Tom")
             .get<String>("superName")
-        assert(superName == "Alex")
+        assert(superName == "Tom")
     }
 
     @Test
@@ -49,6 +47,8 @@ class KotlinUseCaseTest {
             .get<String>("name")
         Assert.assertTrue(name == "Tom")
     }
+
+    internal var expectedException = ExpectedException.none()
 
     @Test(expected = NullPointerException::class)
     fun testNotCallCreateException() {
@@ -90,13 +90,16 @@ class KotlinUseCaseTest {
         Assert.assertEquals(str, "Hello world")
     }
 
+    // 10. Handle the exception with callback
     @Test
     fun testNotCallCreateErrorCallback() {
         val str = OkReflect
             .on("java.lang.String")
-            .error {
-                assert(it.toString().contains("you have to call create()"))
-            }
+            .error(object : OkReflect.OkReflectErrorCallback {
+                override fun onError(e: Exception) {
+                    assert(e.toString().contains("you have to call create()"))
+                }
+            })
             .get<String>()
     }
 
@@ -172,6 +175,7 @@ class KotlinUseCaseTest {
         assert(clazz == TestClass::class.java)
     }
 
+    // 9. Get and set static field value of the class
     @Test
     fun testSetStaticField() {
         val finalField = OkReflect.on("TestClass")
@@ -227,6 +231,61 @@ class KotlinUseCaseTest {
         assert(name == "Tom")
     }
 
+    @Test
+    fun testCallMethodWithVoidParameter() {
+        val classes = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
+        val args = arrayOf<Any?>("Tom", null)
+        val name = OkReflect.on(TestClass::class.java)
+            .create()
+            .callWithClass("setData2", classes, *args)
+            .get<String?>("name")
+        assert(name == "Tom")
+    }
+
+    @Test
+    fun testCallMethodsWithVoidParameter() {
+        val classes1 = arrayOf<Class<*>>(String::class.java, Byte::class.java)
+        val classes2 = arrayOf<Class<*>>(String::class.java, Char::class.java)
+        val args1 = arrayOf<Any?>("Tom", null)
+        val args2 = arrayOf<Any?>("Bingo", null)
+        val instance = OkReflect.on(TestClass::class.java)
+            .create()
+            .callWithClass("setData2", classes1, *args1)
+            .callWithClass("setData3", classes2, *args2)
+            .get<TestClass>()
+
+        val name = OkReflect.on(instance!!)
+            .get<String>("name")
+        val nickname = OkReflect.on(instance!!)
+            .get<String>("nickname")
+
+        assert(name == "Tom" && nickname == "Bingo")
+    }
+
+    @Test
+    fun testGetResult() {
+        val testClass = TestClass()
+        val name = OkReflect.on(testClass)
+            .call("getName")
+            .getResult<String>()
+        assert(name == "default")
+    }
+
+    @Test
+    fun testSimpleCall() {
+        val testClass = TestClass()
+        val name = OkReflect.on(testClass)
+            .simpleCall<String>("getName")
+        assert(name == "default")
+    }
+
+    @Test
+    fun testSimpleSet() {
+        val testClass = TestClass()
+        val name = OkReflect.on(testClass)
+            .simpleSet<String>("name", "Tom")
+        assert(name == "Tom")
+    }
 
     @Ignore
     @Test
@@ -235,6 +294,36 @@ class KotlinUseCaseTest {
             .set("staticFinalField", "changed")
             .get<String>("staticFinalField")
         assert(finalField == "changed")
+    }
+
+    @Ignore
+    @Test
+    fun testChangeParameterTypeByMethodHandle() {
+        val originTypes = arrayOf<Class<*>>(String::class.java, Char::class.java)
+        val newTypes = arrayOf<Class<*>>(String::class.java, Char::class.java)
+        try {
+            val method = TestClass::class.java.getDeclaredMethod("setData3", *originTypes)
+            method.isAccessible = true
+            val methodHandle = MethodHandles.lookup().unreflect(method)
+            val filter = getFilter(originTypes, newTypes)
+            MethodHandles.filterArguments(methodHandle, 2, filter)
+            println("")
+        } catch (e: NoSuchMethodException) {
+            e.printStackTrace()
+        } catch (e: IllegalAccessException) {
+            e.printStackTrace()
+        }
+
+    }
+
+    @Throws(IllegalAccessException::class, NoSuchMethodException::class)
+    private fun getFilter(originTypes: Array<Class<*>>, newTypes: Array<Class<*>>): MethodHandle {
+        var filterMethod: Method? = TestClass::class.java.getDeclaredMethod("setData3", *originTypes)
+        filterMethod = OkReflect.on(filterMethod!!)
+            .set("parameterTypes", newTypes)
+            .get<Method>()
+        filterMethod!!.isAccessible = true
+        return MethodHandles.lookup().unreflect(filterMethod)
     }
 
 

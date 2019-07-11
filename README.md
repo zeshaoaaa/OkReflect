@@ -214,9 +214,36 @@ val str = OkReflect
 
 
 
-### 11. Simply set field or call method
+### 11. Call method with class info
 
 ```java
+// Java
+Class classes[] = {String.class, Byte.class};
+Object args[] = {"Tom", null};
+String name = OkReflect.on(TestClass.class)
+                .create()
+                .callWithClass("setData2", classes, args)
+                .get("name");
+```
+
+```kotlin
+// Kotlin
+val classes = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
+val args = arrayOf<Any?>("Tom", null)
+val name = OkReflect.on(TestClass::class.java)
+            .create()
+            .callWithClass("setData2", classes, *args)
+            .get<String?>("name")
+```
+
+
+
+
+
+### 12. Simply set field or call method
+
+```java
+// Java
 TestClass testClass = new TestClass();
 String nameFromeMethod = OkReflect.on(testClass)
                 .simpleCall("getName");
@@ -225,9 +252,19 @@ String name = OkReflect.on(testClass)
                 .simpleSet("name", "Tom");
 ```
 
+```kotlin
+// Kotlin
+val testClass = TestClass()
+val nameFromMethod = OkReflect.on(testClass)
+            .simpleCall<String>("getName")
+
+val name = OkReflect.on(testClass)
+            .simpleSet<String>("name", "Tom")
+```
 
 
-### 12. Use dynamic proxy
+
+### 13. Use dynamic proxy
 
 ```Java
 // First step of using dynamic proxy: declare the interface
@@ -253,6 +290,8 @@ val substring = OkReflect.on("java.lang.String")
 ```
 
 ### 
+
+
 
 ## Configuration
 ### Gradle
