@@ -7,8 +7,7 @@ import org.junit.rules.ExpectedException;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 
 
@@ -34,12 +33,13 @@ public class UseCaseTest {
     }
 
     @Test
-    public void testGetFieldFromSuperClass() {
-        TestClass testClass = new TestClass("Alex");
+    public void testSetAndGetFieldFromSuperClass() {
+        TestClass testClass = new TestClass();
         String superName = OkReflect.on(SuperTestClass.class)
                 .with(testClass)
+                .set("superName", "Tom")
                 .get("superName");
-        assert superName.equals("Alex");
+        assert superName.equals("Tom");
     }
 
     @Test
@@ -237,12 +237,33 @@ public class UseCaseTest {
 
     @Test
     public void testCallMethodWithVoidParameter() {
-        TestClass testClass = new TestClass();
         Class classes[] = {String.class, Byte.class};
-        String name = OkReflect.on(testClass)
-                .call("setData2", classes, "Tom", null)
+        Object args[] = {"Tom", null};
+        String name = OkReflect.on(TestClass.class)
+                .create()
+                .call("setData2", classes, args)
                 .get("name");
         assert name.equals("Tom");
+    }
+
+    @Test
+    public void testCallMethodsWithVoidParameter() {
+        Class classes1[] = {String.class, Byte.class};
+        Class classes2[] = {String.class, Character.class};
+        Object args1[] = {"Tom", null};
+        Object args2[] = {"Bingo", null};
+        TestClass instance = OkReflect.on(TestClass.class)
+                .create()
+                .call("setData2", classes1, args1)
+                .call("setData3", classes2, args2)
+                .get();
+
+        String name = OkReflect.on(instance)
+                .get("name");
+        String nickname = OkReflect.on(instance)
+                .get("nickname");
+
+        assert name.equals("Tom") && nickname.equals("Bingo");
     }
 
     @Test
@@ -254,6 +275,22 @@ public class UseCaseTest {
         assert name.equals("default");
     }
 
+    @Test
+    public void testSimpleCall() {
+        TestClass testClass = new TestClass();
+        String name = OkReflect.on(testClass)
+                .simpleCall("getName");
+        assert name.equals("default");
+    }
+
+    @Test
+    public void testSimpleSet() {
+        TestClass testClass = new TestClass();
+        String name = OkReflect.on(testClass)
+                .simpleSet("name", "Tom");
+        assert name.equals("Tom");
+    }
+
     @Ignore
     @Test
     public void testSetFinalFieldOfClass() {
@@ -263,10 +300,34 @@ public class UseCaseTest {
         assert finalField.equals("changed");
     }
 
-    // Fix Bug 'set field of instance failed, when class is super class',
-    // Fix Bug 'get class of parameter failed, when parameter is null'
-    // Added getResult() method for the purpose of obtain the return value no matter it is null or not.
-    // Added classes parameter to call() and simpleCall() methods for the purpose of
-    // passing void parameter into the method.
+    @Ignore
+    @Test
+    public void testChangeParameterTypeByMethodHandle() {
+        Class originTypes[] = {String.class, char.class};
+        Class newTypes[] = {String.class, Character.class};
+        try {
+            Method method = TestClass.class.getDeclaredMethod("setData3", originTypes);
+            method.setAccessible(true);
+            MethodHandle methodHandle = MethodHandles.lookup().unreflect(method);
+            MethodHandle filter = getFilter(originTypes, newTypes);
+            MethodHandles.filterArguments(methodHandle, 2, filter);
+            System.out.println("");
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private MethodHandle getFilter(Class[] originTypes, Class[] newTypes) throws IllegalAccessException, NoSuchMethodException {
+        Method filterMethod = TestClass.class.getDeclaredMethod("setData3", originTypes);
+        filterMethod = OkReflect.on(filterMethod)
+                .set("parameterTypes", newTypes)
+                .get();
+        filterMethod.setAccessible(true);
+        MethodHandle filter = MethodHandles.lookup().unreflect(filterMethod);
+        return filter;
+    }
 
 }

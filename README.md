@@ -214,7 +214,20 @@ val str = OkReflect
 
 
 
-### 11. Use dynamic proxy
+### 11. Simply set field or call method
+
+```java
+TestClass testClass = new TestClass();
+String nameFromeMethod = OkReflect.on(testClass)
+                .simpleCall("getName");
+
+String name = OkReflect.on(testClass)
+                .simpleSet("name", "Tom");
+```
+
+
+
+### 12. Use dynamic proxy
 
 ```Java
 // First step of using dynamic proxy: declare the interface

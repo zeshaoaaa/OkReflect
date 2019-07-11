@@ -211,9 +211,19 @@ val str = OkReflect
             .get<String>()
 ```
 
+### 11. 只修改字段或调用方法
+
+```java
+TestClass testClass = new TestClass();
+String nameFromeMethod = OkReflect.on(testClass)
+                .simpleCall("getName");
+
+String name = OkReflect.on(testClass)
+                .simpleSet("name", "Tom");
+```
 
 
-### 11. 动态代理
+### 12. 动态代理
 
 ```Java
 // First step of using dynamic proxy: declare the interface

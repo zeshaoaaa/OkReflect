@@ -5,10 +5,11 @@ public class TestClass extends SuperTestClass {
     private static String staticString = "staticString";
     private final String finalString = "finalString";
     private static final String staticFinalField = "finalString";
-    private final String nickname = "666";
+    private String nickname = "666";
     private byte b;
     private Byte b2;
     public char c = 'a';
+    public Character c2 = 'a';
     private static int i = 10;
     private Integer i2 = 12;
 
@@ -50,6 +51,11 @@ public class TestClass extends SuperTestClass {
     private void setData2(String name, Byte b) {
         this.name = name;
         this.b2 = b;
+    }
+
+    private void setData3(String name, Character c) {
+        this.nickname = name;
+        this.c2 = c;
     }
 
 }

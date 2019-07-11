@@ -2,6 +2,7 @@ package okreflect
 
 import okreflect.MethodGetter.Companion.getConstructor
 import okreflect.MethodGetter.Companion.getMethod
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
 
 /**
@@ -79,7 +80,7 @@ class OkReflect {
     /**
      * The class of parameters in the method.
      */
-    private var parameterTypes: Array<Class<*>>? = null
+    // private var parameterTypes: Array<Class<*>>? = null
 
     /**
      * @param className: The name of the class that you want to create.
@@ -109,6 +110,12 @@ class OkReflect {
         this.instance = instance
         this.clazz = instance.javaClass
     }
+
+    /**
+     *
+     */
+    var lookup: MethodHandles.Lookup? = null
+
 
     /**
      * Set the parameters of the constructor of the class that you want to create.
@@ -167,17 +174,36 @@ class OkReflect {
      * The method will be called when [get] method called.
      * The method will be call with the instance.
      */
-    fun call(methodName: String, classes: Array<Class<*>>, vararg args: Any): OkReflect {
-        parameterTypes = classes
-        return realCall(methodName, true, *args)
+    fun call(methodName: String, classes: Array<Class<*>>?, vararg args: Any): OkReflect {
+        return realCall(true,methodName, classes, *args)
     }
 
     /**
      * @See [call]
      */
     fun call(methodName: String, vararg args: Any): OkReflect {
-        return realCall(methodName, true, *args)
+        return call(methodName, null, *args)
     }
+
+    /**
+     * @param methodName: The name of the method that you want to call.
+     * @param classes: The class of the parameters.
+     * @param args: The parameters of the method that you wan to call.
+     *
+     * Call the method and return the return value of the method directly.
+     */
+    fun <T> simpleCall(methodName: String, classes: Array<Class<*>>?, vararg args: Any): T? {
+        realCall(true,methodName, classes,  *args)
+        return get()
+    }
+
+    /**
+     * @See [simpleCall]
+     */
+    fun <T> simpleCall(methodName: String, vararg args: Any): T? {
+        return simpleCall<T>(methodName, null, *args)
+    }
+
 
     /**
      * @param methodName: the name of the method that you want to call.
@@ -188,7 +214,7 @@ class OkReflect {
      * The method will be call with the return value from last method.
      */
     fun callWithResult(methodName: String, vararg args: Any): OkReflect {
-        return realCall(methodName, false, *args)
+        return realCall(false,methodName, null, *args)
     }
 
     /**
@@ -199,13 +225,16 @@ class OkReflect {
      * Invoke the method with instance or the return type from last method.
      */
     private fun realCall(
-        methodName: String, callWithInstance: Boolean = true,
+        callWithInstance: Boolean = true,
+        methodName: String,
+        classes: Array<Class<*>>?,
         vararg args: Any
     ): OkReflect {
         if (methodCallList == null) {
             methodCallList = ArrayList()
         }
-        methodCallList!!.add(MethodCall(methodName, callWithInstance, args))
+        val call = MethodCall(methodName, classes, callWithInstance, args)
+        methodCallList!!.add(call)
         return this
     }
 
@@ -224,13 +253,36 @@ class OkReflect {
     /**
      * @param fieldName: The name of the field that you want to set.
      * @param arg: The value of the field that you want to set.
+     *
+     * Set field value.
      */
     fun set(fieldName: String, arg: Any): OkReflect {
+        addArgToFieldMap(fieldName, arg)
+        return this
+    }
+
+    /**
+     * @param fieldName: The name of the field that you want to set.
+     * @param arg: The value of the field that you want to set.
+     *
+     * Add parameter to field map for use it later.
+     */
+    private fun addArgToFieldMap(fieldName: String, arg: Any) {
         if (setFieldMap == null) {
             setFieldMap = LinkedHashMap()
         }
         setFieldMap!![fieldName] = arg
-        return this
+    }
+
+    /**
+     * @param fieldName: The name of the field that you want to set.
+     * @param arg: The value of the field that you want to set.
+
+     * Set field value and return the value.
+     */
+    fun <T> simpleSet(fieldName: String, arg: Any): T? {
+        addArgToFieldMap(fieldName, arg)
+        return get(fieldName)
     }
 
 
@@ -279,7 +331,7 @@ class OkReflect {
      */
     private fun invoke(methodCall: MethodCall) {
         val args = methodCall.args
-        val method = getMethod(clazz, methodCall.methodName, args, parameterTypes)
+        val method = getMethod(clazz, methodCall.classes, methodCall.methodName, args)
         val returnType = method!!.returnType.toString()
         if (returnType == "void") {
             method.invoke(instance, *args)
@@ -412,7 +464,7 @@ class OkReflect {
      * when you trying to get return value no matter result is null,
      * then you can use this method.
      */
-    fun <T> getResult():T? {
+    fun <T> getResult(): T? {
         return getByFlag(RETURN_FLAG_RESULT)
     }
 

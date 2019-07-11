@@ -1,6 +1,8 @@
 package okreflect
 
 import okreflect.OkReflect.Companion.accessible
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
 
 /**
@@ -9,6 +11,8 @@ import java.lang.reflect.*
 class MethodGetter {
 
     companion object {
+
+
         /**
          * Get the constructor of the class.
          */
@@ -74,9 +78,9 @@ class MethodGetter {
          */
         fun getMethod(
             clazz: Class<*>?,
+            parameterTypes: Array<Class<*>>?,
             name: String,
-            args: Array<out Any?>,
-            parameterTypes: Array<Class<*>>?
+            args: Array<out Any?>
         ): Method? {
 
             var exception: Exception? = null
