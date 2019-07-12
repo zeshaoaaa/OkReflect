@@ -5,7 +5,7 @@
 # OkReflect
 OkReflect is a library that trying to help you use Java Reflection APIs with ease.
 
-[Introduction of OkReflect](https://medium.com/@zeshao09/okreflect-java-reflection-framework-a86316b919a4/)
+[Introduction to OkReflect](https://medium.com/@zeshao09/okreflect-java-reflection-framework-a86316b919a4/)
 
 ## Usage
 
