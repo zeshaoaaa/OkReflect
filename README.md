@@ -200,7 +200,7 @@ String str = OkReflect
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        assert e.toString().contains("you have to call create()");
+                        // handle the exception
                     }
                 })
                 .get();
@@ -211,7 +211,7 @@ String str = OkReflect
 val str = OkReflect
             .on("java.lang.String")
             .error {
-                assert(it.toString().contains("you have to call create()"))
+                // handle the exception
             }
             .get<String>()
 ```
@@ -233,7 +233,7 @@ String name = OkReflect.on(TestClass.class)
 ```kotlin
 // Kotlin
 val classes = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
-val args = arrayOf<Any?>("Tom", null)
+val args = arrayOf("Tom", null)
 val name = OkReflect.on(TestClass::class.java)
             .create()
             .callWithClass("setData2", classes, *args)
@@ -253,7 +253,7 @@ String name = OkReflect.on(TestClass.class)
                 .simpleCall("getName");
 
 name = OkReflect.on(TestClass.class)
-  							.create()
+                .create()
                 .simpleSet("name", "Tom");
 ```
 

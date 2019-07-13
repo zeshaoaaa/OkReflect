@@ -223,7 +223,7 @@ class KotlinUseCaseTest {
     @Test
     fun testCallMethodWithMultipleParameter() {
         val b: Byte = 1
-        val p = arrayOf<Any>("Tom", b)
+        val p = arrayOf("Tom", b)
         val name = OkReflect.on(TestClass::class.java)
             .create()
             .call("setData", *p)
@@ -234,7 +234,7 @@ class KotlinUseCaseTest {
     @Test
     fun testCallMethodWithVoidParameter() {
         val classes = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
-        val args = arrayOf<Any?>("Tom", null)
+        val args = arrayOf("Tom", null)
         val name = OkReflect.on(TestClass::class.java)
             .create()
             .callWithClass("setData2", classes, *args)
