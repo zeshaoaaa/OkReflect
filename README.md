@@ -45,13 +45,14 @@ val str: String? = OkReflect.on(String::class.java)
 
 
 
-### 3. Get the field value from the super class
+### 3. Set or get the field value from the super class
 
 ```java
 // Java
 TestClass testClass = new TestClass("Alex");
 String superName = OkReflect.on(SuperTestClass.class)
   									.with(testClass)
+  									.set("superName", "Tom")
   									.get("superName");
 ```
 
@@ -60,6 +61,7 @@ String superName = OkReflect.on(SuperTestClass.class)
 val testClass = TestClass("Alex")
 val superName = OkReflect.on(SuperTestClass::class.java)
             .with(testClass)
+						.set("Tom")
             .get<String>("superName")
 ```
 
@@ -157,14 +159,14 @@ val str = OkReflect
 
 ```java
 // Java
-int i = OkReflect.on("TestClass")
+int i = OkReflect.on(TestClass.class)
                 .set("i", 6)
                 .get("i");
 ```
 
 ```kotlin
 // Kotlin
-val i = OkReflect.on("TestClass")
+val i = OkReflect.on(TestClass.class)
             .set("i", 6)
             .get<Int?>("i")
 ```
@@ -216,7 +218,7 @@ val str = OkReflect
 
 
 
-### 11. Call method with class info
+### 11. Call method with type of parameters
 
 ```java
 // Java
@@ -246,21 +248,23 @@ val name = OkReflect.on(TestClass::class.java)
 
 ```java
 // Java
-TestClass testClass = new TestClass();
-String nameFromeMethod = OkReflect.on(testClass)
+String name = OkReflect.on(TestClass.class)
+                .create()
                 .simpleCall("getName");
 
-String name = OkReflect.on(testClass)
+name = OkReflect.on(TestClass.class)
+  							.create()
                 .simpleSet("name", "Tom");
 ```
 
 ```kotlin
 // Kotlin
-val testClass = TestClass()
-val nameFromMethod = OkReflect.on(testClass)
+var name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleCall<String>("getName")
 
-val name = OkReflect.on(testClass)
+name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleSet<String>("name", "Tom")
 ```
 

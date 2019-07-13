@@ -78,11 +78,6 @@ class OkReflect {
     private var withOuterInstance = false
 
     /**
-     * The class of parameters in the method.
-     */
-    // private var parameterTypes: Array<Class<*>>? = null
-
-    /**
      * @param className: The name of the class that you want to create.
      *
      * Constructor of OkReflect.
@@ -105,17 +100,11 @@ class OkReflect {
      *
      * Constructor of OkReflect.
      */
-    constructor(instance: Any) {
+    constructor(instance: Any, isInstance: Boolean = true) {
         withOuterInstance = true
         this.instance = instance
         this.clazz = instance.javaClass
     }
-
-    /**
-     *
-     */
-    var lookup: MethodHandles.Lookup? = null
-
 
     /**
      * Set the parameters of the constructor of the class that you want to create.
@@ -175,7 +164,7 @@ class OkReflect {
      * The method will be call with the instance.
      */
     fun callWithClass(methodName: String, classes: Array<Class<*>>?, vararg args: Any?): OkReflect {
-        return realCall(true,methodName, classes, *args)
+        return realCall(true, methodName, classes, *args)
     }
 
     /**
@@ -193,7 +182,7 @@ class OkReflect {
      * Call the method and return the return value of the method directly.
      */
     fun <T> simpleCall(methodName: String, classes: Array<Class<*>>?, vararg args: Any): T? {
-        realCall(true,methodName, classes,  *args)
+        realCall(true, methodName, classes, *args)
         return get()
     }
 
@@ -214,7 +203,7 @@ class OkReflect {
      * The method will be call with the return value from last method.
      */
     fun callWithResult(methodName: String, vararg args: Any): OkReflect {
-        return realCall(false,methodName, null, *args)
+        return realCall(false, methodName, null, *args)
     }
 
     /**
@@ -312,12 +301,17 @@ class OkReflect {
         var field = clazz!!.getDeclaredField(fieldName)
         field = accessible(field)
         if (osName != "Linux") {
-            removeFinalModifier(field)
+            modifyModifiers(field)
         }
         field.set(instance, arg)
     }
 
-    private fun removeFinalModifier(field: Field) {
+    /**
+     * @param field The field that you want to modify.
+     *
+     * Modify the field modifiers of the final field for the purpose of make it modifiable.
+     */
+    private fun modifyModifiers(field: Field) {
         var modifiers = Field::class.java.getDeclaredField("modifiers")
         modifiers = accessible(modifiers)
         modifiers.setInt(field, field.modifiers and Modifier.FINAL.inv())
@@ -383,6 +377,9 @@ class OkReflect {
         }
     }
 
+    /**
+     * Set value of the field from the declared field.
+     */
     private fun initFieldValueFromDeclaredField(): Any? {
         return if (instance == null) {
             val field = clazz!!.getDeclaredField(targetFieldName)
@@ -407,21 +404,18 @@ class OkReflect {
      * @param proxyClass:The proxy object
      */
     fun <T> use(proxyClass: Class<T>): T {
-        val handler = object : InvocationHandler {
-            override fun invoke(proxy: Any?, method: Method?, vararg args: Any): Any {
-                var methodName: String? = null
-                if (method != null) {
-                    methodName = method.name
+        val handler = InvocationHandler { proxy, method, args ->
+            var methodName: String? = null
+            if (method != null) {
+                methodName = method.name
+                try {
+                    call(methodName, *args).get<T>()!!
+                } catch (e: Exception) {
+                    printError(e)
+                    null
                 }
-                if (methodName != null) {
-                    try {
-                        return call(methodName, *args).get()!!
-                    } catch (e: Exception) {
-                        throw e
-                    }
-                } else {
-                    throw Exception("Cannot find the method tha you invoked.")
-                }
+            } else {
+                printError(Exception("Cannot find the method tha you invoked."))
             }
         }
         return Proxy.newProxyInstance(proxyClass.classLoader, arrayOf(proxyClass), handler) as T
@@ -517,12 +511,19 @@ class OkReflect {
         return getByResult<T>(returnFlag)
     }
 
+    /**
+     * Initialize field class by className.
+     */
     private fun initClazz() {
         if (clazz == null) {
             this.clazz = Class.forName(className!!)
         }
     }
 
+    /**
+     * When flag is RETURN_FLAG_INSTANCE or RETURN_FLAT_RESULT_OR_INSTANCE,
+     * it means following operation needs instance.
+     */
     private fun needInstance(returnFlag: Int): Boolean {
         return returnFlag == RETURN_FLAG_INSTANCE || returnFlag == RETURN_FLAG_RESULT_OR_INSTANCE
     }
@@ -558,6 +559,9 @@ class OkReflect {
         }
     }
 
+    /**
+     * Set all the fields that you want to set.
+     */
     private fun setFields() {
         if (setFieldMap != null && setFieldMap!!.size > 0) {
             setFieldMap?.forEach {
@@ -592,7 +596,68 @@ class OkReflect {
         }
     }
 
+    /**
+     * Reset all the data.
+     */
+    private fun reset(clazz: Class<*>) {
+        this.clazz = clazz
+        this.className = null
+        this.methodCallList?.clear()
+        this.constructorArgs = null
+        this.createCalled = false
+        this.errorCallback = null
+        this.instance = null
+        this.result = null
+        this.setFieldMap?.clear()
+        this.targetFieldName = null
+        this.targetFieldValue = null
+        this.withOuterInstance = false
+    }
+
+    /**
+     * Reset all the data.
+     */
+    private fun reset(className: String) {
+        this.className = className
+        this.clazz = null
+        this.methodCallList?.clear()
+        this.constructorArgs = null
+        this.createCalled = false
+        this.errorCallback = null
+        this.instance = null
+        this.result = null
+        this.setFieldMap?.clear()
+        this.targetFieldName = null
+        this.targetFieldValue = null
+        this.withOuterInstance = false
+    }
+
+    /**
+     * Reset all the data.
+     */
+    private fun reset(instance: Any, isInstance: Boolean = true) {
+        this.instance = instance
+        this.withOuterInstance = true
+        this.clazz = instance.javaClass
+
+        this.className = null
+        this.methodCallList?.clear()
+        this.constructorArgs = null
+        this.createCalled = false
+        this.errorCallback = null
+        this.result = null
+        this.setFieldMap?.clear()
+        this.targetFieldName = null
+        this.targetFieldValue = null
+    }
+
     companion object {
+
+        /**
+         * The instance of OkReflect.
+         */
+        private var instance: OkReflect? = null
+
 
         /**
          * Return the class.
@@ -624,7 +689,12 @@ class OkReflect {
          */
         @JvmStatic
         fun on(className: String): OkReflect {
-            return OkReflect(className)
+            if (instance == null) {
+                instance = OkReflect(className)
+            } else {
+                this.instance!!.reset(className)
+            }
+            return instance!!
         }
 
         /**
@@ -632,7 +702,12 @@ class OkReflect {
          */
         @JvmStatic
         fun on(clazz: Class<*>): OkReflect {
-            return OkReflect(clazz)
+            if (instance == null) {
+                instance = OkReflect(clazz)
+            } else {
+                this.instance!!.reset(clazz)
+            }
+            return instance!!
         }
 
         /**
@@ -641,8 +716,13 @@ class OkReflect {
          * Set the instance for methods that you want to call.
          */
         @JvmStatic
-        fun on(instance: Any): OkReflect {
-            return OkReflect(instance)
+        fun onInstance(instance: Any): OkReflect {
+            if (this.instance == null) {
+                this.instance = OkReflect(instance, true)
+            } else {
+                this.instance!!.reset(instance, true)
+            }
+            return this.instance!!
         }
 
         /**
@@ -668,28 +748,6 @@ class OkReflect {
                     Modifier.isPublic(accessible.declaringClass.modifiers)
         }
 
-        /**
-         * @param path: The path and name of the class.
-         * @param content: The content of the class.
-         * @param options: The options use for compile.
-         *
-         * Compile content to class.
-         *
-         * Note: This method is working on progress.
-         */
-        @JvmStatic
-        private fun compile(path: String, content: String, options: OkCompileOptions) {
-            OkCompiler.compile(path, content, options)
-        }
-
-        /**
-         * @see [compile]
-         */
-        @JvmStatic
-        private fun compile(path: String, content: String) {
-            compile(path, content, OkCompileOptions())
-        }
-
     }
 
     /**
@@ -700,5 +758,5 @@ class OkReflect {
         fun onError(e: Exception)
     }
 
-
 }
+

@@ -209,7 +209,7 @@ public class UseCaseTest {
     @Test
     public void testCallMethodFromOuterInstance() {
         TestClass testClass = new TestClass();
-        String name = OkReflect.on(testClass)
+        String name = OkReflect.onInstance(testClass)
                 .call("getName")
                 .get("name");
         assert name.equals("default");
@@ -218,7 +218,7 @@ public class UseCaseTest {
     @Test
     public void testSetFieldFromOuterInstance() {
         TestClass testClass = new TestClass();
-        String name = OkReflect.on(testClass)
+        String name = OkReflect.onInstance(testClass)
                 .set("name", "Alex")
                 .get("name");
         assert name.equals("Alex");
@@ -258,9 +258,9 @@ public class UseCaseTest {
                 .callWithClass("setData3", classes2, args2)
                 .get();
 
-        String name = OkReflect.on(instance)
+        String name = OkReflect.onInstance(instance)
                 .get("name");
-        String nickname = OkReflect.on(instance)
+        String nickname = OkReflect.onInstance(instance)
                 .get("nickname");
 
         assert name.equals("Tom") && nickname.equals("Bingo");
@@ -269,7 +269,7 @@ public class UseCaseTest {
     @Test
     public void testGetResult() {
         TestClass testClass = new TestClass();
-        String name = OkReflect.on(testClass)
+        String name = OkReflect.onInstance(testClass)
                 .call("getName")
                 .getResult();
         assert name.equals("default");
@@ -277,18 +277,44 @@ public class UseCaseTest {
 
     @Test
     public void testSimpleCall() {
-        TestClass testClass = new TestClass();
-        String name = OkReflect.on(testClass)
+        String name = OkReflect.on(TestClass.class)
+                .create()
                 .simpleCall("getName");
         assert name.equals("default");
     }
 
     @Test
     public void testSimpleSet() {
-        TestClass testClass = new TestClass();
-        String name = OkReflect.on(testClass)
+        String name = OkReflect.on(TestClass.class)
+                .create()
                 .simpleSet("name", "Tom");
         assert name.equals("Tom");
+    }
+
+
+
+    @Test
+    public void testReset() {
+        String name1 = OkReflect.on(TestClass.class)
+                .create()
+                .call("setName", "Tom")
+                .get("name");
+
+        String name2 = OkReflect.on(TestClass.class)
+                .create()
+                .call("setName", "Alex")
+                .get("name");
+
+        assert name1.equals("Tom") && name2.equals("Alex");
+    }
+
+    @Ignore
+    @Test
+    public void testCreateGenericsInstance() {
+        GenericsClass genericsClass = OkReflect.on(GenericsClass.class)
+                .create("666")
+                .get();
+        assert genericsClass != null;
     }
 
     @Ignore
@@ -322,12 +348,14 @@ public class UseCaseTest {
 
     private MethodHandle getFilter(Class[] originTypes, Class[] newTypes) throws IllegalAccessException, NoSuchMethodException {
         Method filterMethod = TestClass.class.getDeclaredMethod("setData3", originTypes);
-        filterMethod = OkReflect.on(filterMethod)
+        filterMethod = OkReflect.onInstance(filterMethod)
                 .set("parameterTypes", newTypes)
                 .get();
         filterMethod.setAccessible(true);
         MethodHandle filter = MethodHandles.lookup().unreflect(filterMethod);
         return filter;
     }
+
+    // Change on(instance) to onInstance(instance) for the purpose of removing the ambiguity.
 
 }

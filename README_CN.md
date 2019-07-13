@@ -90,16 +90,16 @@ val str = OkReflect
 
 ```java
 // Java
-TestClass testClass = new TestClass();
-String name = OkReflect.on(testClass)
+TestClass instance = new TestClass();
+String name = OkReflect.onInstance(instance)
                 .set("name", "Alex")
                 .get("name");
 ```
 
 ```kotlin
 // Kotlin
-val testClass = TestClass()
-val name = OkReflect.on(testClass)
+val instance = TestClass()
+val name = OkReflect.onInstance(instance)
             .call("getName")
             .get<String>("name")
 ```
@@ -156,14 +156,14 @@ val str = OkReflect
 
 ```java
 // Java
-int i = OkReflect.on("TestClass")
+int i = OkReflect.on(TestClass.class)
                 .set("i", 6)
                 .get("i");
 ```
 
 ```kotlin
 // Kotlin
-val i = OkReflect.on("TestClass")
+val i = OkReflect.on(TestClass.class)
             .set("i", 6)
             .get<Int?>("i")
 ```
@@ -174,14 +174,14 @@ val i = OkReflect.on("TestClass")
 
 ```java
 // Java
-String finalField = OkReflect.on("TestClass")
+String finalField = OkReflect.on(TestClass.class)
                 .set("staticString", "changed")
                 .get("staticString");
 ```
 
 ``` kotlin
 // Kotlin
-val finalField = OkReflect.on("TestClass")
+val finalField = OkReflect.on(TestClass.class)
             .set("staticString", "changed")
             .get<String?>("staticString")
 ```
@@ -197,7 +197,7 @@ String str = OkReflect
                 .error(new OkReflect.OkReflectErrorCallback() {
                     @Override
                     public void onError(@NotNull Exception e) {
-                        assert e.toString().contains("you have to call create()");
+                        // 处理异常
                     }
                 })
                 .get();
@@ -208,7 +208,7 @@ String str = OkReflect
 val str = OkReflect
             .on("java.lang.String")
             .error {
-                assert(it.toString().contains("you have to call create()"))
+                // 处理异常
             }
             .get<String>()
 ```
@@ -245,21 +245,23 @@ val name = OkReflect.on(TestClass::class.java)
 
 ```java
 // Java
-TestClass testClass = new TestClass();
-String nameFromeMethod = OkReflect.on(testClass)
+String name = OkReflect.on(TestClass.class)
+                .create()
                 .simpleCall("getName");
 
-String name = OkReflect.on(testClass)
+name = OkReflect.on(TestClass.class)
+  							.create()
                 .simpleSet("name", "Tom");
 ```
 
 ```kotlin
 // Kotlin
-val testClass = TestClass()
-val nameFromMethod = OkReflect.on(testClass)
+var name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleCall<String>("getName")
 
-val name = OkReflect.on(testClass)
+name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleSet<String>("name", "Tom")
 ```
 
@@ -270,7 +272,7 @@ val name = OkReflect.on(testClass)
 ### 13. 动态代理
 
 ```Java
-// First step of using dynamic proxy: declare the interface
+// 首先声明接口
 public interface StringProxy {
   String substring(int beginIndex);
 }

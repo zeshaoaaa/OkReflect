@@ -1,5 +1,0 @@
-package okreflect
-
-class OkCompileOptions {
-
-}

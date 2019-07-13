@@ -205,7 +205,7 @@ class KotlinUseCaseTest {
     @Test
     fun testCallMethodFromOuterInstance() {
         val testClass = TestClass()
-        val name = OkReflect.on(testClass)
+        val name = OkReflect.onInstance(testClass)
             .call("getName")
             .get<String>("name")
         assert(name == "default")
@@ -214,7 +214,7 @@ class KotlinUseCaseTest {
     @Test
     fun testSetFieldFromOuterInstance() {
         val testClass = TestClass()
-        val name = OkReflect.on(testClass)
+        val name = OkReflect.onInstance(testClass)
             .set("name", "Alex")
             .get<String>("name")
         assert(name == "Alex")
@@ -244,8 +244,8 @@ class KotlinUseCaseTest {
 
     @Test
     fun testCallMethodsWithVoidParameter() {
-        val classes1 = arrayOf<Class<*>>(String::class.java, Byte::class.java)
-        val classes2 = arrayOf<Class<*>>(String::class.java, Char::class.java)
+        val classes1 = arrayOf<Class<*>>(String::class.java, Byte::class.javaObjectType)
+        val classes2 = arrayOf<Class<*>>(String::class.java, Char::class.javaObjectType)
         val args1 = arrayOf<Any?>("Tom", null)
         val args2 = arrayOf<Any?>("Bingo", null)
         val instance = OkReflect.on(TestClass::class.java)
@@ -254,9 +254,9 @@ class KotlinUseCaseTest {
             .callWithClass("setData3", classes2, *args2)
             .get<TestClass>()
 
-        val name = OkReflect.on(instance!!)
+        val name = OkReflect.onInstance(instance!!)
             .get<String>("name")
-        val nickname = OkReflect.on(instance!!)
+        val nickname = OkReflect.onInstance(instance!!)
             .get<String>("nickname")
 
         assert(name == "Tom" && nickname == "Bingo")
@@ -265,7 +265,7 @@ class KotlinUseCaseTest {
     @Test
     fun testGetResult() {
         val testClass = TestClass()
-        val name = OkReflect.on(testClass)
+        val name = OkReflect.onInstance(testClass)
             .call("getName")
             .getResult<String>()
         assert(name == "default")
@@ -273,16 +273,16 @@ class KotlinUseCaseTest {
 
     @Test
     fun testSimpleCall() {
-        val testClass = TestClass()
-        val name = OkReflect.on(testClass)
+        val name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleCall<String>("getName")
         assert(name == "default")
     }
 
     @Test
     fun testSimpleSet() {
-        val testClass = TestClass()
-        val name = OkReflect.on(testClass)
+        val name = OkReflect.on(TestClass::class.java)
+            .create()
             .simpleSet<String>("name", "Tom")
         assert(name == "Tom")
     }
@@ -319,7 +319,7 @@ class KotlinUseCaseTest {
     @Throws(IllegalAccessException::class, NoSuchMethodException::class)
     private fun getFilter(originTypes: Array<Class<*>>, newTypes: Array<Class<*>>): MethodHandle {
         var filterMethod: Method? = TestClass::class.java.getDeclaredMethod("setData3", *originTypes)
-        filterMethod = OkReflect.on(filterMethod!!)
+        filterMethod = OkReflect.onInstance(filterMethod!!)
             .set("parameterTypes", newTypes)
             .get<Method>()
         filterMethod!!.isAccessible = true
