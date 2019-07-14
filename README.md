@@ -61,7 +61,7 @@ String superName = OkReflect.on(SuperTestClass.class)
 val testClass = TestClass("Alex")
 val superName: String? = OkReflect.on(SuperTestClass::class.java)
             .with(testClass)
-			.set("Tom")
+            .set("Tom")
             .get("superName")
 ```
 
