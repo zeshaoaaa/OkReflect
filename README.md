@@ -51,9 +51,9 @@ val str: String? = OkReflect.on(String::class.java)
 // Java
 TestClass testClass = new TestClass("Alex");
 String superName = OkReflect.on(SuperTestClass.class)
-  									.with(testClass)
-  									.set("superName", "Tom")
-  									.get("superName");
+                     .with(testClass)
+                     .set("superName", "Tom")
+                     .get("superName");
 ```
 
 ```kotlin
