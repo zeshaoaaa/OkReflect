@@ -9,7 +9,7 @@ OkReflect is a library that trying to help you use Java Reflection APIs with eas
 
 ## Usage
 
-### 1. Create instance with class name
+### 1. Create the instance with the class name
 
 ```java
 // Java
@@ -27,7 +27,7 @@ val str: String? = OkReflect.on("java.lang.String")
 
 
 
-### 2. Create instance by class
+### 2. Create the instance by class
 
 ```java
 // Java
@@ -45,7 +45,7 @@ val str: String? = OkReflect.on(String::class.java)
 
 
 
-### 3. Set or get the field value from the super class
+### 3. Set or get the field value from the superclass
 
 ```java
 // Java
@@ -89,7 +89,7 @@ val str = OkReflect
 
 
 
-### 5. Invoke methods and set fields with instance that created outside of OkReflect
+### 5. Invoke the methods and set the fields with the instance that created outside of OkReflect
 
 ```java
 // Java
@@ -109,7 +109,7 @@ val name = OkReflect.on(testClass)
 
 
 
-### 6. Invoke method with return value of last method
+### 6. Invoke the method with the return value of the last method
 
 ```java
 // Java
@@ -155,7 +155,7 @@ val str = OkReflect
 
 
 
-### 8. Get and set field value of instance
+### 8. Get and set the field value of the instance
 
 ```java
 // Java
@@ -173,7 +173,7 @@ val i = OkReflect.on(TestClass.class)
 
 
 
-### 9. Get and set static field value of the class
+### 9. Get and set the value of the static field of the class
 
 ```java
 // Java
@@ -218,7 +218,7 @@ val str = OkReflect
 
 
 
-### 11. Call method with type of parameters
+### 11. Call the method with the type of parameters
 
 ```java
 // Java
@@ -244,7 +244,7 @@ val name = OkReflect.on(TestClass::class.java)
 
 
 
-### 12. Simply set field or call method
+### 12. Simply set the field or call the method
 
 ```java
 // Java
