@@ -59,10 +59,10 @@ String superName = OkReflect.on(SuperTestClass.class)
 ```kotlin
 // Kotlin
 val testClass = TestClass("Alex")
-val superName = OkReflect.on(SuperTestClass::class.java)
+val superName: String? = OkReflect.on(SuperTestClass::class.java)
             .with(testClass)
-						.set("Tom")
-            .get<String>("superName")
+			.set("Tom")
+            .get("superName")
 ```
 
 
@@ -80,11 +80,11 @@ String str = OkReflect
 
 ```kotlin
 // Kotlin
-val str = OkReflect
+val str: String? = OkReflect
             .on(String::class.java)
             .create("Hello world")
             .call("substring", 6)     
-            .get<String?>()
+            .get()
 ```
 
 
@@ -102,9 +102,9 @@ String name = OkReflect.on(testClass)
 ```kotlin
 // Kotlin
 val testClass = TestClass()
-val name = OkReflect.on(testClass)
+val name: String? = OkReflect.on(testClass)
             .call("getName")
-            .get<String>("name")
+            .get("name")
 ```
 
 
@@ -123,12 +123,12 @@ String str = OkReflect
 
 ```kotlin
 // Kotlin
-val str = OkReflect
+val str: String? = OkReflect
             .on(String::class.java)
             .create("Hello world")
             .call("substring", 6)
             .callWithResult("substring", 4)
-            .get<String?>()
+            .get()
 ```
 
 
@@ -146,11 +146,11 @@ String str = OkReflect
 
 ```kotlin
 // Kotlin
-val str = OkReflect
+val str: String? = OkReflect
             .on(String::class.java)
             .create("Hello world")
             .call("substring", 6)
-            .getInstance<String>()
+            .getInstance()
 ```
 
 
@@ -166,9 +166,9 @@ int i = OkReflect.on(TestClass.class)
 
 ```kotlin
 // Kotlin
-val i = OkReflect.on(TestClass.class)
+val i: Int? = OkReflect.on(TestClass.class)
             .set("i", 6)
-            .get<Int?>("i")
+            .get("i")
 ```
 
 
@@ -184,9 +184,9 @@ String finalField = OkReflect.on("TestClass")
 
 ``` kotlin
 // Kotlin
-val finalField = OkReflect.on("TestClass")
+val finalField: String? = OkReflect.on("TestClass")
             .set("staticString", "changed")
-            .get<String?>("staticString")
+            .get("staticString")
 ```
 
 
@@ -208,12 +208,12 @@ String str = OkReflect
 
 ```kotlin
 // Kotlin
-val str = OkReflect
+val str: String? = OkReflect
             .on("java.lang.String")
             .error {
                 // handle the exception
             }
-            .get<String>()
+            .get()
 ```
 
 
