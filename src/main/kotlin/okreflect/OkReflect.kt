@@ -1,8 +1,10 @@
 package okreflect
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import okreflect.MethodGetter.Companion.accessible
 import okreflect.MethodGetter.Companion.getConstructor
 import okreflect.MethodGetter.Companion.getMethod
-import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
 
 /**
@@ -15,7 +17,8 @@ import java.lang.reflect.*
  * @author <a href="https://github.com/zeshaoaaa">zeshaoaaa</a>
  *
  */
-class OkReflect {
+open class OkReflect {
+
 
     /**
      * The className of the object that you want to create.
@@ -53,7 +56,7 @@ class OkReflect {
     private var targetFieldValue: Any? = null
 
     /**
-     * OnError method of this callback will be call when exception happen.
+     * OnError method of this async will be call when exception happen.
      */
     private var errorCallback: OkReflectErrorCallback? = null
 
@@ -101,7 +104,7 @@ class OkReflect {
      * Constructor of OkReflect.
      */
     constructor(instance: Any, isInstance: Boolean = true) {
-        withOuterInstance = true
+        withOuterInstance = isInstance
         this.instance = instance
         this.clazz = instance.javaClass
     }
@@ -131,8 +134,8 @@ class OkReflect {
     /**
      * @param action: The action that you want to take when exception happen.
      *
-     * Set the error callback for receive error message when exception happen.
-     * If you have not set the callback, then you have catch exception by yourself.
+     * Set the error async for receive error message when exception happen.
+     * If you have not set the async, then you have catch exception by yourself.
      */
     fun error(action: (java.lang.Exception) -> Unit): OkReflect {
         errorCallback = object : OkReflectErrorCallback {
@@ -144,10 +147,10 @@ class OkReflect {
     }
 
     /**
-     * @param okReflectErrorCallback: Exception callback.
+     * @param okReflectErrorCallback: Exception async.
      *
-     * Set the error callback for receive error message when exception happen.
-     * If you have not set the callback, then you have catch exception by yourself.
+     * Set the error async for receive error message when exception happen.
+     * If you have not set the async, then you have catch exception by yourself.
      */
     fun error(okReflectErrorCallback: OkReflectErrorCallback): OkReflect {
         this.errorCallback = okReflectErrorCallback
@@ -192,7 +195,6 @@ class OkReflect {
     fun <T> simpleCall(methodName: String, vararg args: Any): T? {
         return simpleCall<T>(methodName, null, *args)
     }
-
 
     /**
      * @param methodName: the name of the method that you want to call.
@@ -352,7 +354,7 @@ class OkReflect {
     }
 
     /**
-     * Initialize the target field value.
+     * Initialize the field field value.
      */
     private fun initFieldValue() {
         targetFieldValue = if (targetFieldName != null) {
@@ -401,7 +403,9 @@ class OkReflect {
     }
 
     /**
-     * @param proxyClass:The proxy object
+     * @param proxyClass:The class of proxy object.
+     *
+     * Create instance from this class.
      */
     fun <T> use(proxyClass: Class<T>): T {
         val handler = InvocationHandler { proxy, method, args ->
@@ -426,7 +430,7 @@ class OkReflect {
      *
      * Print the exception message.
      * If you have already pass the ErrorCallback into onError method,
-     * you will receive the error message from callback.
+     * you will receive the error message from async.
      */
     private fun printError(e: java.lang.Exception) {
         if (errorCallback != null) {
@@ -445,6 +449,50 @@ class OkReflect {
         targetFieldName = fieldName
         return getByFlag<T>(RETURN_FLAG_FIELD)
     }
+
+    /**
+     * @param fieldName: The name of the field that you want to get.
+     *
+     * Get instance when return value from last method is null.
+     */
+    fun field(fieldName: String? = null): OkReflect {
+        targetFieldName = fieldName
+        return this
+    }
+
+    /**
+     * @param asyncCallback: The async the you can handle the result in it.
+     *
+     * When you trying to execute the reflection operation asynchronously,
+     * you can set the async for handling the result.
+     */
+    fun <T> async(asyncCallback: OkReflectAsyncCallback) {
+        launchReflection<T> {
+            asyncCallback.onResult(it)
+        }
+    }
+
+    /**
+     * @param action: The action you want to take after task finished.
+     *
+     * When you trying to execute the reflection operation asynchronously,
+     * you can set the actionfor handling the result.
+     */
+    fun <T> callback(action: (result: T?) -> Unit) {
+        launchReflection<T>(action)
+    }
+
+    /**
+     * Launch reflection task.
+     */
+    private fun <T> launchReflection(action: (result: T?) -> Unit) {
+        val flag = if (targetFieldName == null) RETURN_FLAG_RESULT_OR_INSTANCE else RETURN_FLAG_FIELD
+        GlobalScope.launch {
+            val result = realGet<T>(flag)
+            action(result)
+        }
+    }
+
 
     /**
      * @see [get]
@@ -489,7 +537,7 @@ class OkReflect {
     }
 
     /**
-     * Initialize the instance and invoke the methods that you called
+     * Initialize the instance, invoke the methods that you called
      * and set or get the field that you want.
      */
     private fun <T> realGet(returnFlag: Int): T? {
@@ -575,24 +623,28 @@ class OkReflect {
      */
     private fun <T> getByResult(returnFlag: Int): T? {
         return try {
-            when (returnFlag) {
-                RETURN_FLAG_FIELD -> {
-                    targetFieldValue as T
-                }
-                RETURN_FLAG_RESULT -> result as T
-                RETURN_FLAG_RESULT_OR_INSTANCE -> {
-                    if (result != null) {
-                        result as T
-                    } else {
-                        instance as T
-                    }
-                }
-                RETURN_FLAG_INSTANCE -> instance as T
-                else -> clazz as T
-            }
+            realGetByFlag(returnFlag)
         } catch (e: Exception) {
             printError(e)
             null
+        }
+    }
+
+    private fun <T> realGetByFlag(returnFlag: Int): T? {
+        return when (returnFlag) {
+            RETURN_FLAG_FIELD -> {
+                targetFieldValue as T
+            }
+            RETURN_FLAG_RESULT -> result as T
+            RETURN_FLAG_RESULT_OR_INSTANCE -> {
+                if (result != null) {
+                    result as T
+                } else {
+                    instance as T
+                }
+            }
+            RETURN_FLAG_INSTANCE -> instance as T
+            else -> clazz as T
         }
     }
 
@@ -602,53 +654,46 @@ class OkReflect {
     private fun reset(clazz: Class<*>) {
         this.clazz = clazz
         this.className = null
-        this.methodCallList?.clear()
-        this.constructorArgs = null
-        this.createCalled = false
-        this.errorCallback = null
         this.instance = null
-        this.result = null
-        this.setFieldMap?.clear()
-        this.targetFieldName = null
-        this.targetFieldValue = null
         this.withOuterInstance = false
+
+
+        clearCommonData()
     }
 
     /**
      * Reset all the data.
      */
     private fun reset(className: String) {
-        this.className = className
         this.clazz = null
-        this.methodCallList?.clear()
-        this.constructorArgs = null
-        this.createCalled = false
-        this.errorCallback = null
+        this.className = className
         this.instance = null
-        this.result = null
-        this.setFieldMap?.clear()
-        this.targetFieldName = null
-        this.targetFieldValue = null
         this.withOuterInstance = false
+
+        clearCommonData()
     }
 
     /**
      * Reset all the data.
      */
     private fun reset(instance: Any, isInstance: Boolean = true) {
+        this.clazz = instance.javaClass
+        this.className = null
         this.instance = instance
         this.withOuterInstance = true
-        this.clazz = instance.javaClass
 
-        this.className = null
-        this.methodCallList?.clear()
+        clearCommonData()
+    }
+
+    private fun clearCommonData() {
         this.constructorArgs = null
         this.createCalled = false
-        this.errorCallback = null
         this.result = null
-        this.setFieldMap?.clear()
+        this.errorCallback = null
         this.targetFieldName = null
         this.targetFieldValue = null
+        this.setFieldMap?.clear()
+        this.methodCallList?.clear()
     }
 
     companion object {
@@ -657,7 +702,6 @@ class OkReflect {
          * The instance of OkReflect.
          */
         private var instance: OkReflect? = null
-
 
         /**
          * Return the class.
@@ -685,7 +729,7 @@ class OkReflect {
         private const val RETURN_FLAG_RESULT = 5
 
         /**
-         * Set the class name of the instance/
+         * Set the class name of the instance
          */
         @JvmStatic
         fun on(className: String): OkReflect {
@@ -725,37 +769,21 @@ class OkReflect {
             return this.instance!!
         }
 
-        /**
-         * Change the accessibility of the methods and constructors.
-         */
-        fun <T : AccessibleObject> accessible(accessible: T): T {
-            if (accessible is Member && isPublic(accessible)) {
-                return accessible
-            }
-
-            if (!accessible.isAccessible) {
-                accessible.isAccessible = true
-            }
-
-            return accessible
-        }
-
-        /**
-         * This method will return whether the Member is public or not.
-         */
-        private fun isPublic(accessible: Member): Boolean {
-            return Modifier.isPublic(accessible.modifiers) &&
-                    Modifier.isPublic(accessible.declaringClass.modifiers)
-        }
-
     }
 
     /**
-     * When exception happen, onError method of this callback will be call
+     * When exception happen, the onError() method will be called
      * if you have specified it.
      */
     interface OkReflectErrorCallback {
         fun onError(e: Exception)
+    }
+
+    /**
+     * When the reflection task finished, onResult() will be called if you have set it.
+     */
+    interface OkReflectAsyncCallback {
+        fun onResult(result: Any?)
     }
 
 }

@@ -22,12 +22,31 @@ public class TestClass extends SuperTestClass {
         this.name = name;
     }
 
+    private TestClass(int age) {
+        this.name = name;
+        this.age = age;
+    }
+
     private TestClass(String name, int age) {
         this.name = name;
         this.age = age;
     }
 
+    private TestClass(String name, Character c) {
+        this.name = name;
+        this.c2 = c2;
+    }
+
     private void setName(String name) {
+        this.name = name;
+    }
+
+    private void setName2(String name) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         this.name = name;
     }
 
@@ -57,5 +76,7 @@ public class TestClass extends SuperTestClass {
         this.nickname = name;
         this.c2 = c;
     }
+
+
 
 }

@@ -1,6 +1,5 @@
 package okreflect
 
-import okreflect.OkReflect.Companion.accessible
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
@@ -11,7 +10,6 @@ import java.lang.reflect.*
 class MethodGetter {
 
     companion object {
-
 
         /**
          * Get the constructor of the class.
@@ -175,7 +173,32 @@ class MethodGetter {
             } else return declared
         }
 
+        /**
+         * Change the accessibility of the methods and constructors.
+         */
+        fun <T : AccessibleObject> accessible(accessible: T): T {
+            if (accessible is Member && isPublic(accessible)) {
+                return accessible
+            }
+
+            if (!accessible.isAccessible) {
+                accessible.isAccessible = true
+            }
+
+            return accessible
+        }
+
+        /**
+         * This method will return whether the Member is public or not.
+         */
+        private fun isPublic(accessible: Member): Boolean {
+            return Modifier.isPublic(accessible.modifiers) &&
+                    Modifier.isPublic(accessible.declaringClass.modifiers)
+        }
+
     }
+
+
 
 
 

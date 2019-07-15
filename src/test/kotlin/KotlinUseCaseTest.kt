@@ -1,3 +1,5 @@
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
 import okreflect.OkReflect
 import org.junit.Assert
 import org.junit.Ignore
@@ -90,7 +92,7 @@ class KotlinUseCaseTest {
         Assert.assertEquals(str, "Hello world")
     }
 
-    // 10. Handle the exception with callback
+    // 10. Handle the exception with async
     @Test
     fun testNotCallCreateErrorCallback() {
         val str = OkReflect
@@ -324,6 +326,41 @@ class KotlinUseCaseTest {
             .get<Method>()
         filterMethod!!.isAccessible = true
         return MethodHandles.lookup().unreflect(filterMethod)
+    }
+
+    @Test
+    fun testCallMethodAsync() {
+        val start = System.currentTimeMillis()
+        OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .callback<TestClass> {
+                val current = System.currentTimeMillis()
+                val diff = current - start
+                assertTrue(diff > 2 * 1000)
+                assertTrue(diff < 3 * 1000)
+                assertEquals(it, null)
+            }
+
+        Thread.sleep(4 * 1000)
+    }
+
+    @Test
+    fun testCallMethodAsyncWithReturnValue() {
+        val start = System.currentTimeMillis()
+        OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .field("name")
+            .callback<String> {
+                val current = System.currentTimeMillis()
+                val diff = current - start
+                assertTrue(diff > 2 * 1000)
+                assertTrue(diff < 3 * 1000)
+                assertEquals("Tom", it)
+            }
+
+        Thread.sleep(5 * 1000)
     }
 
 
