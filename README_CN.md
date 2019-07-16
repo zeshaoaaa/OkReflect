@@ -267,9 +267,55 @@ name = OkReflect.on(TestClass::class.java)
 
 
 
+### 13. 异步调用方法
+
+```java
+// Java
+OkReflect.on(TestClass.class)
+                .create()
+                .call("setName2", "Tom")
+                .async(result -> {
+                    // handle the result
+                });
+```
+
+```kotlin
+// Kotlin
+OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .callback<String> {
+                // handle the result
+            }
+```
 
 
-### 13. 动态代理
+
+### 14. 异步调用方法并获取特定字段
+
+```java
+// Java
+OkReflect.on(TestClass.class)
+                .create()
+                .call("setName2", "Tom")
+                .field("name")
+                .async(result -> {
+                    // handle the result
+                });
+```
+
+```kotlin
+// Kotlin
+OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .field("name")
+            .callback<String> {
+                // handle the result
+            }
+```
+
+### 15. 动态代理
 
 ```Java
 // 首先声明接口

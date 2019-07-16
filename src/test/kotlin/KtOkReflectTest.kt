@@ -14,7 +14,7 @@ import java.lang.reflect.Method
 /**
  * This test class responsible for test all the use case.
  */
-class KotlinUseCaseTest {
+class KtOkReflectTest {
 
     @Test
     fun testCreateClassWithClassName() {

@@ -242,8 +242,6 @@ val name = OkReflect.on(TestClass::class.java)
 
 
 
-
-
 ### 12. Simply set the field or call the method
 
 ```java
@@ -270,7 +268,57 @@ name = OkReflect.on(TestClass::class.java)
 
 
 
-### 13. Use dynamic proxy
+### 13. Call the method asynchronously
+
+```java
+// Java
+OkReflect.on(TestClass.class)
+                .create()
+                .call("setName2", "Tom")
+                .async(result -> {
+                    // handle the result
+                });
+```
+
+```kotlin
+// Kotlin
+OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .callback<String> {
+                // handle the result
+            }
+```
+
+
+
+### 14. Call the method asynchrounously and get the field of the instance
+
+```java
+// Java
+OkReflect.on(TestClass.class)
+                .create()
+                .call("setName2", "Tom")
+                .field("name")
+                .async(result -> {
+                    // handle the result
+                });
+```
+
+```kotlin
+// Kotlin
+OkReflect.on(TestClass::class.java)
+            .create()
+            .call("setName2", "Tom")
+            .field("name")
+            .callback<String> {
+                // handle the result
+            }
+```
+
+
+
+### 15. Use dynamic proxy
 
 ```Java
 // First step of using dynamic proxy: declare the interface
